@@ -1,0 +1,12 @@
+<svg width="128" height="128" viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="128" height="128" rx="32" fill="url(#fileuni-grad)" />
+  <path d="M38 40V78C38 92.3594 49.6406 104 64 104C78.3594 104 90 92.3594 90 78V40" stroke="white" stroke-width="12" stroke-linecap="round"/>
+  <path d="M38 40H68L78 50V60" stroke="white" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="64" cy="78" r="8" fill="white" />
+  <defs>
+    <linearGradient id="fileuni-grad" x1="0" y1="0" x2="128" y2="128" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#6366F1" />
+      <stop offset="1" stop-color="#A855F7" />
+    </linearGradient>
+  </defs>
+</svg>

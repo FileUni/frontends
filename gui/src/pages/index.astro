@@ -1,0 +1,46 @@
+---
+import Launcher from '../components/Launcher';
+import '../styles/global.css';
+// FileUni Launcher
+---
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>FileUni Launcher</title>
+    <script is:inline>
+      (function() {
+        try {
+          const themeState = JSON.parse(localStorage.getItem('fileuni-theme'));
+          if (themeState && themeState.state && themeState.state.theme) {
+            const theme = themeState.state.theme;
+            const isDark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+            document.documentElement.classList.toggle('dark', isDark);
+          }
+          
+          const langState = JSON.parse(localStorage.getItem('fileuni-language'));
+          if (langState && langState.state && langState.state.language) {
+            let lang = langState.state.language;
+            if (lang === 'auto') {
+              lang = navigator.language.split('-')[0] === 'zh' ? 'zh' : 'en';
+            }
+            document.documentElement.lang = lang;
+          }
+        } catch (e) {}
+      })();
+    </script>
+    <style>
+      html, body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
+    </style>
+  </head>
+  <body>
+    <Launcher client:load />
+  </body>
+</html>

@@ -1,0 +1,9 @@
+---
+import Layout from '../layouts/Layout.astro'
+import { App } from '@/App.tsx'
+import i18next from 'i18next'
+---
+
+<Layout title={`${i18next.t('pages.index.title')} - FileUni`}>
+	<App client:only="react" />
+</Layout>

@@ -1,0 +1,41 @@
+@import "tailwindcss";
+@source "../**/*.{astro,html,js,jsx,ts,tsx}";
+@source "../../../shared/src/**/*.{js,jsx,ts,tsx}";
+
+@theme {
+  --color-primary: #0082c9;
+  --font-sans: "Inter", "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif;
+}
+
+/* Ensure dark mode works with .dark class */
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  --background: #f8fafc;
+  --foreground: #0f172a;
+  font-size: 16px;
+}
+
+.dark {
+  --background: #020617;
+  --foreground: #f1f5f9;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-size: 16px;
+  line-height: 1.6;
+  -webkit-text-size-adjust: 100%;
+}
+
+.btn-primary {
+  background-color: #0082c9;
+  color: white;
+}
+
+.dark .btn-primary {
+  background-color: #0ea5e9;
+}

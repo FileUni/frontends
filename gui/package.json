@@ -1,0 +1,37 @@
+{
+  "name": "fileuni-ui",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "rm -rf node_modules/.vite && astro dev --host 0.0.0.0 --port 1420",
+    "build": "astro build",
+    "tauri:dev": "tauri dev",
+    "tauri:build": "tauri build"
+  },
+  "dependencies": {
+    "@fileuni/shared": "workspace:*",
+    "@astrojs/react": "^4.4.2",
+    "@tailwindcss/vite": "^4.1.18",
+    "@tauri-apps/api": "2.10.1",
+    "@tauri-apps/plugin-dialog": "^2.0.0",
+    "@types/react": "^19.2.13",
+    "@types/react-dom": "^19.2.3",
+    "astro": "^5.16.14",
+    "clsx": "^2.1.1",
+    "i18next": "^25.8.4",
+    "i18next-browser-languagedetector": "^8.2.0",
+    "lucide-react": "^0.474.0",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "react-i18next": "^16.5.4",
+    "smol-toml": "^1.6.0",
+    "tailwind-merge": "^3.0.1",
+    "tailwindcss": "^4.1.18",
+    "zustand": "^5.0.11"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "2.10.0",
+    "typescript": "5.9.3"
+  }
+}

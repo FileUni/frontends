@@ -1,0 +1,9 @@
+{
+  "name": "fileuni-frontends",
+  "private": true,
+  "workspaces": [
+    "cli",
+    "gui",
+    "shared"
+  ]
+}

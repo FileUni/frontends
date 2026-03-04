@@ -1,0 +1,43 @@
+---
+import '../style.css';
+import '@/lib/i18n'; // Init i18n
+
+interface Props {
+	title: string;
+}
+
+const { title } = Astro.props;
+---
+
+<!doctype html>
+<html lang="zh">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width" />
+		<link rel="icon" type="image/svg+xml" href="/ui/favicon.svg" />
+		<meta name="generator" content={Astro.generator} />
+		<title>{title}</title>
+		<script is:inline>
+			// Theme Detection
+			const theme = (() => {
+				if (typeof localStorage !== 'undefined' && localStorage.getItem('fileuni-theme')) {
+					const saved = JSON.parse(localStorage.getItem('fileuni-theme'));
+					if (saved.state.theme === 'dark' || saved.state.theme === 'light') return saved.state.theme;
+				}
+				return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+			})();
+			document.documentElement.classList.toggle('dark', theme === 'dark');
+
+			// Language Detection
+			const lang = (() => {
+				const saved = localStorage.getItem('fileuni-language-raw');
+				if (saved) return saved;
+				return navigator.language.split('-')[0] || 'en';
+			})();
+			document.documentElement.lang = lang;
+		</script>
+	</head>
+	<body class="bg-background text-foreground transition-colors duration-300 min-h-screen flex flex-col">
+		<slot />
+	</body>
+</html>
