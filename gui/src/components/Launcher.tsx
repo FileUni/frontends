@@ -122,13 +122,17 @@ export default function Launcher() {
   // Check config path on initial load
   useEffect(() => {
     if (!hasSelectedRuntimeDirs) {
-      invoke<{ config_dir: string; app_data_dir: string }>('get_default_runtime_dirs')
-        .then((defaults) => {
-          if (defaults?.config_dir && defaults?.app_data_dir) {
-            return handleRuntimeDirsSelected(defaults.config_dir, defaults.app_data_dir);
+      invoke('set_runtime_dirs', {
+        config_dir: '',
+        app_data_dir: '',
+      })
+        .then(() => {
+          return invoke<{ config_dir: string; app_data_dir: string }>('get_runtime_dirs');
+        })
+        .then((resolved) => {
+          if (resolved.config_dir && resolved.app_data_dir) {
+            setRuntimeDirs(resolved.config_dir, resolved.app_data_dir);
           }
-          setShowConfigSelector(true);
-          return undefined;
         })
         .catch(() => {
           setShowConfigSelector(true);
@@ -147,7 +151,12 @@ export default function Launcher() {
         config_dir: nextConfigDir,
         app_data_dir: nextAppDataDir,
       });
-      setRuntimeDirs(nextConfigDir, nextAppDataDir);
+      const resolved = await invoke<{ config_dir: string; app_data_dir: string }>('get_runtime_dirs');
+      if (resolved.config_dir && resolved.app_data_dir) {
+        setRuntimeDirs(resolved.config_dir, resolved.app_data_dir);
+      } else {
+        setRuntimeDirs(nextConfigDir, nextAppDataDir);
+      }
       setShowConfigSelector(false);
       toast.success(t('launcher.messages.config_set_success'));
     } catch (e: unknown) {

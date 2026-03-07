@@ -87,10 +87,6 @@ export const ConfigPathSelector: React.FC<ConfigPathSelectorProps> = ({
   const handleConfirm = async () => {
     const configTrimmed = configDir.trim();
     const appTrimmed = appDataDir.trim();
-    if (!configTrimmed || !appTrimmed) {
-      setError(t('config_selector.path_required'));
-      return;
-    }
     setError(null);
     setIsSubmitting(true);
     try {
@@ -176,6 +172,8 @@ export const ConfigPathSelector: React.FC<ConfigPathSelectorProps> = ({
             </div>
           </div>
 
+          <p className="text-xs text-slate-500 dark:text-slate-400">{t('config_selector.default_hint')}</p>
+
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
               <div className="w-full border-t border-slate-200 dark:border-slate-700" />
@@ -219,7 +217,7 @@ export const ConfigPathSelector: React.FC<ConfigPathSelectorProps> = ({
           </button>
           <button
             onClick={handleConfirm}
-            disabled={!configDir.trim() || !appDataDir.trim() || isSubmitting}
+            disabled={isSubmitting}
             className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 text-white rounded-xl text-sm font-medium shadow-lg shadow-blue-500/25 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
           >
             <Check size={16} />
