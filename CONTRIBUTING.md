@@ -1,3 +1,3 @@
 # Contributing
 
-See [fileuni/CONTRIBUTING.md](https://github.com/fileuni/fileuni/blob/main/CONTRIBUTING.md) in the main repository.
+See [FileUni/CONTRIBUTING.md](https://github.com/FileUni/FileUni-Project/blob/main/CONTRIBUTING.md) in the main repository.

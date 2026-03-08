@@ -1,7 +1,7 @@
 blank_issues_enabled: false
 contact_links:
   - name: "🐛 Issues & Feature Requests"
-    url: https://github.com/fileuni/fileuni/issues/new/choose
+    url: https://github.com/FileUni/FileUni-Project/issues/new/choose
     about: |
       This repo does not accept issues. Please use the main repository:
       本仓库不接受 Issues，请前往主仓库提交
