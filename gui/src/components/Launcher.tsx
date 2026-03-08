@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { invoke } from '@tauri-apps/api/core';
-import { listen } from '@tauri-apps/api/event';
 import { useTranslation } from 'react-i18next';
+import { ask } from '@tauri-apps/plugin-dialog';
 import * as toml from 'smol-toml';
 import {
   Sun,
@@ -33,6 +32,7 @@ import { useThemeStore, type Theme, useLanguageStore, type Language,
 import { useConfigStore } from '../stores/config';
 import '../lib/i18n';
 import ConfigSelector from './ConfigSelector';
+import { isTauriRuntime, safeInvoke, safeListen } from '../lib/tauri';
 
 // OS info interface
 interface OSInfo {
@@ -47,6 +47,20 @@ interface ServiceStatusResponse {
   is_running: boolean;
 }
 
+interface RuntimeDirsInspection {
+  config_dir: string;
+  app_data_dir: string;
+  config_path: string;
+  config_exists: boolean;
+  config_dir_exists: boolean;
+  app_data_dir_exists: boolean;
+}
+
+interface RuntimeDirsPayload {
+  config_dir: string;
+  app_data_dir: string;
+}
+
 const extractErrorMessage = (error: unknown): string => {
   if (error instanceof Error) {
     return error.message;
@@ -58,7 +72,7 @@ export default function Launcher() {
   const { t } = useTranslation();
   const { theme, setTheme } = useThemeStore();
   const { language, setLanguage } = useLanguageStore();
-  const { configDir, appDataDir, setRuntimeDirs, hasSelectedRuntimeDirs } = useConfigStore();
+  const { configDir, appDataDir, setRuntimeDirs } = useConfigStore();
 
   // Toast i18n
   const toastI18n = React.useMemo(() => ({
@@ -96,6 +110,70 @@ export default function Launcher() {
   const [configSummary, setConfigSummary] = useState('');
   const [configSummaryLevel, setConfigSummaryLevel] = useState<'success' | 'warning' | 'error' | 'info'>('info');
   const [isResettingAdminPassword, setIsResettingAdminPassword] = useState(false);
+  const [configFilePath, setConfigFilePath] = useState('');
+
+  const inspectRuntimeDirs = async (
+    nextConfigDir?: string | null,
+    nextAppDataDir?: string | null,
+  ) => {
+    return safeInvoke<RuntimeDirsInspection>('inspect_runtime_dirs', {
+      config_dir: nextConfigDir ?? '',
+      app_data_dir: nextAppDataDir ?? '',
+    });
+  };
+
+  const bindRuntimeDirs = async (
+    nextConfigDir?: string | null,
+    nextAppDataDir?: string | null,
+  ) => {
+    const inspected = await inspectRuntimeDirs(nextConfigDir, nextAppDataDir);
+    await safeInvoke<void>('set_runtime_dirs', {
+      config_dir: inspected.config_dir,
+      app_data_dir: inspected.app_data_dir,
+    });
+    setRuntimeDirs(inspected.config_dir, inspected.app_data_dir);
+    setConfigFilePath(inspected.config_path);
+    return inspected;
+  };
+
+  const ensureRuntimeConfigReady = async () => {
+    try {
+      const inspected = await bindRuntimeDirs(configDir, appDataDir);
+      if (inspected.config_exists) {
+        return inspected;
+      }
+
+      const accepted = await ask(
+        t('launcher.runtime_config_missing_prompt', { path: inspected.config_path }),
+        {
+          title: t('launcher.runtime_config_missing_title'),
+          kind: 'warning',
+        },
+      );
+
+      if (!accepted) {
+        toast.warning(t('launcher.runtime_config_missing_cancelled'));
+        return null;
+      }
+
+      const ensured = await safeInvoke<RuntimeDirsInspection>('ensure_runtime_config', {
+        config_dir: inspected.config_dir,
+        app_data_dir: inspected.app_data_dir,
+      });
+
+      await safeInvoke<void>('set_runtime_dirs', {
+        config_dir: ensured.config_dir,
+        app_data_dir: ensured.app_data_dir,
+      });
+      setRuntimeDirs(ensured.config_dir, ensured.app_data_dir);
+      setConfigFilePath(ensured.config_path);
+      toast.success(t('launcher.messages.runtime_config_created'));
+      return ensured;
+    } catch (error) {
+      toast.error(extractErrorMessage(error));
+      return null;
+    }
+  };
 
   useEffect(() => {
     applyTheme(theme);
@@ -119,44 +197,46 @@ export default function Launcher() {
     }
   }, []);
 
-  // Check config path on initial load
   useEffect(() => {
-    if (!hasSelectedRuntimeDirs) {
-      invoke('set_runtime_dirs', {
-        config_dir: '',
-        app_data_dir: '',
-      })
-        .then(() => {
-          return invoke<{ config_dir: string; app_data_dir: string }>('get_runtime_dirs');
-        })
-        .then((resolved) => {
-          if (resolved.config_dir && resolved.app_data_dir) {
-            setRuntimeDirs(resolved.config_dir, resolved.app_data_dir);
-          }
-        })
-        .catch(() => {
-          setShowConfigSelector(true);
-        });
-    } else {
-      invoke('set_runtime_dirs', {
-        config_dir: configDir,
-        app_data_dir: appDataDir,
-      }).catch(console.error);
+    if (!isTauriRuntime()) {
+      setStatus('Unknown');
+      return;
     }
-  }, [hasSelectedRuntimeDirs, configDir, appDataDir]);
+
+    let cancelled = false;
+
+    const loadRuntimeDirs = async (attempt: number) => {
+      try {
+        await bindRuntimeDirs(configDir, appDataDir);
+      } catch (error) {
+        if (!cancelled && attempt < 5) {
+          window.setTimeout(() => {
+            void loadRuntimeDirs(attempt + 1);
+          }, 300);
+          return;
+        }
+        try {
+          const defaults = await safeInvoke<RuntimeDirsPayload>('get_default_runtime_dirs');
+          const inspected = await bindRuntimeDirs(defaults.config_dir, defaults.app_data_dir);
+          setConfigFilePath(inspected.config_path);
+          return;
+        } catch (fallbackError) {
+          console.error(fallbackError);
+        }
+        console.error(error);
+      }
+    };
+
+    void loadRuntimeDirs(0);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [configDir, appDataDir]);
 
   const handleRuntimeDirsSelected = async (nextConfigDir: string, nextAppDataDir: string) => {
     try {
-      await invoke('set_runtime_dirs', {
-        config_dir: nextConfigDir,
-        app_data_dir: nextAppDataDir,
-      });
-      const resolved = await invoke<{ config_dir: string; app_data_dir: string }>('get_runtime_dirs');
-      if (resolved.config_dir && resolved.app_data_dir) {
-        setRuntimeDirs(resolved.config_dir, resolved.app_data_dir);
-      } else {
-        setRuntimeDirs(nextConfigDir, nextAppDataDir);
-      }
+      await bindRuntimeDirs(nextConfigDir, nextAppDataDir);
       setShowConfigSelector(false);
       toast.success(t('launcher.messages.config_set_success'));
     } catch (e: unknown) {
@@ -165,11 +245,15 @@ export default function Launcher() {
   };
 
   const handleEditConfig = async () => {
+    const ready = await ensureRuntimeConfigReady();
+    if (!ready) {
+      return;
+    }
     setIsEditingConfig(true);
     setConfigFetching(true);
     try {
-      const content = await invoke<string>('get_config_content');
-      const notes = await invoke<Record<string, ConfigNoteEntry>>('get_config_notes');
+      const content = await safeInvoke<string>('get_config_content');
+      const notes = await safeInvoke<Record<string, ConfigNoteEntry>>('get_config_notes');
       setConfigContent(content);
       setSavedConfigContent(content);
       setConfigNotes(notes);
@@ -186,7 +270,7 @@ export default function Launcher() {
   const handleSaveConfig = async () => {
     setConfigBusy(true);
     try {
-      await invoke('save_and_reload_config', { content: configContent });
+      await safeInvoke<void>('save_and_reload_config', { content: configContent });
       toast.success(t('admin.config.reloadSuccess'));
       setSavedConfigContent(configContent);
       setConfigSummary(t('admin.config.reloadSuccess'));
@@ -203,7 +287,7 @@ export default function Launcher() {
   const handleTestConfig = async () => {
     setConfigBusy(true);
     try {
-      const res = await invoke<string[]>('test_config', { content: configContent });
+      const res = await safeInvoke<string[]>('test_config', { content: configContent });
       if (res.length === 0) {
         toast.success(t('launcher.messages.config_test_passed'));
         setConfigErrors([]);
@@ -230,26 +314,30 @@ export default function Launcher() {
   };
 
   useEffect(() => {
-    let unlisten: Promise<() => void>;
+    let unlistenServiceAction: (() => void) | null = null;
+    let unlistenLogs: (() => void) | null = null;
 
     const init = async () => {
+      if (!isTauriRuntime()) {
+        return;
+      }
       await refreshStatus();
       await getVersion();
       await getOS();
 
-      unlisten = listen<string>('service-action', (event) => {
+      unlistenServiceAction = await safeListen<string>('service-action', (event) => {
         if (event.payload === 'start') handleStart();
         if (event.payload === 'stop') handleStop();
       });
+
+      unlistenLogs = await safeListen<LogEntry>('log-update', (event) => {
+        setLogs(prev => [...prev, event.payload].slice(-1000));
+      });
+
+      await safeInvoke<void>('subscribe_logs');
     };
 
-    init();
-
-    const unsubscribeLogs = listen<LogEntry>('log-update', (event) => {
-      setLogs(prev => [...prev, event.payload].slice(-1000));
-    });
-
-    invoke('subscribe_logs').catch(console.error);
+    init().catch(console.error);
 
     const uptimeInterval = setInterval(() => {
       if (status === 'Running') {
@@ -266,8 +354,8 @@ export default function Launcher() {
     mediaQuery.addEventListener('change', handleSystemThemeChange);
 
     return () => {
-      if (unlisten) unlisten.then(f => f()).catch(console.error);
-      unsubscribeLogs.then(f => f()).catch(console.error);
+      unlistenServiceAction?.();
+      unlistenLogs?.();
       clearInterval(uptimeInterval);
       mediaQuery.removeEventListener('change', handleSystemThemeChange);
     };
@@ -275,7 +363,7 @@ export default function Launcher() {
 
   const refreshStatus = async () => {
     try {
-      const response = await invoke<ServiceStatusResponse>('get_service_status');
+      const response = await safeInvoke<ServiceStatusResponse>('get_service_status');
       setStatus(response.status);
     } catch (e: unknown) {
       console.error(e);
@@ -285,7 +373,7 @@ export default function Launcher() {
 
   const getVersion = async () => {
     try {
-      const v = await invoke<string>('get_app_version');
+      const v = await safeInvoke<string>('get_app_version');
       setVersion(v);
     } catch (e: unknown) {
       console.error(e);
@@ -294,7 +382,7 @@ export default function Launcher() {
 
   const getOS = async () => {
     try {
-      const info = await invoke<OSInfo>('get_os_info');
+      const info = await safeInvoke<OSInfo>('get_os_info');
       setOsInfo(info);
       if (info.nixos_hint && !nixosToastShown.current) {
         nixosToastShown.current = true;
@@ -316,9 +404,13 @@ export default function Launcher() {
   };
 
   const handleStart = async () => {
+    const ready = await ensureRuntimeConfigReady();
+    if (!ready) {
+      return;
+    }
     setLoading(true);
     try {
-      await invoke<string>('start_service');
+      await safeInvoke<string>('start_service');
       toast.success(t('launcher.messages.service_started'));
       await refreshStatus();
     } catch (e: unknown) {
@@ -330,7 +422,7 @@ export default function Launcher() {
   const handleStop = async () => {
     setLoading(true);
     try {
-      await invoke<string>('stop_service');
+      await safeInvoke<string>('stop_service');
       toast.success(t('launcher.messages.service_stopped'));
       await refreshStatus();
     } catch (e: unknown) {
@@ -349,7 +441,7 @@ export default function Launcher() {
   const handleInstall = async () => {
     setLoading(true);
     try {
-      await invoke<string>('install_service', { level: serviceInstallLevel, autostart: serviceAutostart });
+      await safeInvoke<string>('install_service', { level: serviceInstallLevel, autostart: serviceAutostart });
       toast.success(t('launcher.messages.install_requested'));
     } catch (e: unknown) {
       toast.error(extractErrorMessage(e));
@@ -360,7 +452,7 @@ export default function Launcher() {
   const handleUninstall = async () => {
     setLoading(true);
     try {
-      await invoke<string>('uninstall_service');
+      await safeInvoke<string>('uninstall_service');
       toast.success(t('launcher.messages.uninstall_requested'));
     } catch (e: unknown) {
       toast.error(extractErrorMessage(e));
@@ -394,7 +486,7 @@ export default function Launcher() {
 
   const handleOpenWebUI = async () => {
     try {
-      await invoke('open_web_ui');
+      await safeInvoke<void>('open_web_ui');
     } catch (e: unknown) {
       toast.error(extractErrorMessage(e));
     }
@@ -402,7 +494,8 @@ export default function Launcher() {
 
   const handleOpenConfig = async () => {
     try {
-      await invoke('open_config_dir');
+      await bindRuntimeDirs(configDir, appDataDir);
+      await safeInvoke<void>('open_config_dir');
     } catch (e: unknown) {
       toast.error(extractErrorMessage(e));
     }
@@ -411,7 +504,7 @@ export default function Launcher() {
   const handleResetAdminPassword = async (password: string): Promise<string> => {
     setLoading(true);
     try {
-      const res = await invoke<string>('reset_admin_password', { password });
+      const res = await safeInvoke<string>('reset_admin_password', { password });
       toast.success(res || t('launcher.reset_admin_password_success'));
       const matched = typeof res === 'string' ? res.match(/user:\s*(.+)$/i) : null;
       return matched?.[1]?.trim() || 'admin';
@@ -545,8 +638,6 @@ export default function Launcher() {
                         installAutostartLabel={t('launcher.install_autostart')}
                         installLevel={serviceInstallLevel}
                         installAutostart={serviceAutostart}
-                        disableToggle={!hasSelectedRuntimeDirs}
-                        disabledHint={t('config_selector.path_required')}
                         onToggleService={() => {
                           if (status === 'Running') {
                             void handleStop();
@@ -571,23 +662,29 @@ export default function Launcher() {
                       />
                     </div>
 
-                    {configDir && appDataDir && (
-                      <div className="bg-white/40 dark:bg-slate-900/40 border border-slate-200/60 dark:border-slate-800/40 rounded-2xl p-4 flex items-center justify-between gap-4 backdrop-blur-sm group hover:border-blue-500/40 transition-all duration-300">
-                        <div className="flex items-center gap-3 min-w-0">
+                    {isTauriRuntime() && (
+                      <div className="bg-white/40 dark:bg-slate-900/40 border border-slate-200/60 dark:border-slate-800/40 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 backdrop-blur-sm group hover:border-blue-500/40 transition-all duration-300">
+                        <div className="flex items-start gap-3 min-w-0">
                           <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center shrink-0 group-hover:bg-blue-500/10 transition-colors">
                             <FileText size={18} className="text-slate-400 group-hover:text-blue-500" />
                           </div>
-                          <div className="min-w-0">
-                            <div className="text-sm font-black uppercase tracking-wider text-slate-400 dark:text-slate-500">{t('launcher.config')}</div>
-                            <div className="text-sm font-mono text-slate-600 dark:text-slate-300 truncate" title={configDir}>{configDir}</div>
-                            <div className="text-xs font-mono text-slate-500 dark:text-slate-400 truncate" title={appDataDir}>{appDataDir}</div>
+                          <div className="min-w-0 space-y-3">
+                            <div className="text-sm font-black uppercase tracking-wider text-slate-400 dark:text-slate-500">{t('launcher.runtime_paths')}</div>
+                            <div>
+                              <div className="text-xs font-bold uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500 mb-1">{t('launcher.config_dir')}</div>
+                              <div className="text-sm font-mono text-slate-600 dark:text-slate-300 break-all">{configDir ?? '...'}</div>
+                            </div>
+                            <div>
+                              <div className="text-xs font-bold uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500 mb-1">{t('launcher.app_data_dir')}</div>
+                              <div className="text-sm font-mono text-slate-500 dark:text-slate-400 break-all">{appDataDir ?? '...'}</div>
+                            </div>
                           </div>
                         </div>
                         <button
                           onClick={() => setShowConfigSelector(true)}
-                          className="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-blue-500 hover:text-white text-slate-600 dark:text-slate-400 text-sm font-bold transition-all shrink-0 shadow-sm"
+                          className="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-blue-500 hover:text-white text-slate-600 dark:text-slate-400 text-sm font-bold transition-all shrink-0 shadow-sm self-start"
                         >
-                          {t('launcher.change_config')}
+                          {t('launcher.modify_runtime_dirs')}
                         </button>
                       </div>
                     )}
@@ -645,7 +742,7 @@ export default function Launcher() {
       <ConfigSelector
         isOpen={showConfigSelector}
         onRuntimeDirsSelected={handleRuntimeDirsSelected}
-        canClose={hasSelectedRuntimeDirs}
+        canClose={true}
         onClose={() => setShowConfigSelector(false)}
       />
 
@@ -664,14 +761,14 @@ export default function Launcher() {
         <div className="fixed inset-0 z-[120] bg-black/70 backdrop-blur-sm p-2 sm:p-4">
           <ConfigWorkbenchShell
             title={t('launcher.edit_config')}
-            configPath={configDir ?? ''}
+            configPath={configFilePath}
             onClose={handleCloseConfigEditor}
             closeAriaLabel={t('common.close')}
           >
             <SystemConfigWorkbench
               tomlAdapter={toml}
               loading={configFetching}
-              configPath={configDir ?? ''}
+              configPath={configFilePath}
               content={configContent}
               savedContent={savedConfigContent}
               notes={configNotes}

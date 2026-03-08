@@ -1,6 +1,6 @@
-import { invoke } from '@tauri-apps/api/core';
-import { open, ask } from '@tauri-apps/plugin-dialog';
+import { open } from '@tauri-apps/plugin-dialog';
 import { ConfigPathSelector } from '@fileuni/shared';
+import { safeInvoke } from '../lib/tauri';
 
 interface ConfigSelectorProps {
   isOpen: boolean;
@@ -16,7 +16,7 @@ export default function ConfigSelector({
   canClose = true,
 }: ConfigSelectorProps) {
   const ensureNativeDialogReady = async () => {
-    const ready = await invoke<boolean>('prepare_native_file_dialog');
+    const ready = await safeInvoke<boolean>('prepare_native_file_dialog');
     if (!ready) {
       throw new Error('Native file dialog is unavailable. Please enter the run data directory manually.');
     }
@@ -37,7 +37,7 @@ export default function ConfigSelector({
       }}
       onValidatePath={async (value) => {
         try {
-          const valid = await invoke<boolean>('validate_runtime_dirs', {
+          const valid = await safeInvoke<boolean>('validate_runtime_dirs', {
             config_dir: value.configDir,
             app_data_dir: value.appDataDir,
           });
@@ -49,30 +49,7 @@ export default function ConfigSelector({
           };
         }
       }}
-      onPreparePath={async (value) => {
-        const ready = await invoke<boolean>('validate_or_prepare_runtime_dirs', {
-          config_dir: value.configDir,
-          app_data_dir: value.appDataDir,
-          auto_create: false,
-        });
-        if (!ready) {
-          const accepted = await ask('Selected directories are unavailable or incomplete. Create directories and default config.toml now?', {
-            title: 'Initialize Runtime Directories',
-            kind: 'info',
-          });
-          if (!accepted) {
-            throw new Error('Runtime directories initialization was declined.');
-          }
-          const initialized = await invoke<boolean>('validate_or_prepare_runtime_dirs', {
-            config_dir: value.configDir,
-            app_data_dir: value.appDataDir,
-            auto_create: true,
-          });
-          if (!initialized) {
-            throw new Error('Failed to initialize runtime directories.');
-          }
-        }
-      }}
+      onPreparePath={async () => undefined}
       onConfirmPath={async (value) => {
         onRuntimeDirsSelected(value.configDir, value.appDataDir);
       }}

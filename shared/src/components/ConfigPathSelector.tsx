@@ -47,7 +47,6 @@ export const ConfigPathSelector: React.FC<ConfigPathSelectorProps> = ({
 
   useEffect(() => {
     if (isOpen) {
-      setRunDataDir('');
       setError(null);
       setConfigDir('');
       setAppDataDir('');
