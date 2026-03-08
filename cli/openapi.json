@@ -6,7 +6,7 @@
     "license": {
       "name": ""
     },
-    "version": "0.1.1-alpha.2"
+    "version": "0.0.2-alpha2"
   },
   "paths": {
     "/api/v1/admin/domain-acme-ddns/assets/certs": {
@@ -9738,17 +9738,12 @@
         "type": "object",
         "required": [
           "config_path",
-          "toml_content",
-          "embedded_template"
+          "toml_content"
         ],
         "properties": {
           "config_path": {
             "type": "string",
             "description": "Current config path"
-          },
-          "embedded_template": {
-            "type": "string",
-            "description": "Embedded template"
           },
           "toml_content": {
             "type": "string",
