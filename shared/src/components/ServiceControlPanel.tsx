@@ -81,28 +81,29 @@ export const ServiceControlPanel: React.FC<ServiceControlPanelProps> = ({
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-3 leading-relaxed max-w-md">{description}</p>
         </div>
         
-        <div className="relative z-30" ref={serviceMenuRef}>
-          <button
-            onClick={() => setShowServiceMenu((prev) => !prev)}
-            disabled={isLoading || !supportService}
-            className={`p-4 rounded-2xl transition-all duration-300 border ${
-              showServiceMenu
-                ? 'bg-blue-500 border-transparent text-white shadow-lg shadow-blue-500/30 scale-105'
-                : 'bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-400 dark:text-slate-500 border-slate-200/50 dark:border-slate-700/50'
-            } disabled:opacity-30 active:scale-95`}
-            title={systemIntegrationLabel}
-          >
-            <Settings size={20} className={showServiceMenu ? 'rotate-90' : ''} />
-          </button>
+        {supportService && (
+          <div className="relative z-30" ref={serviceMenuRef}>
+            <button
+              onClick={() => setShowServiceMenu((prev) => !prev)}
+              disabled={isLoading}
+              className={`p-4 rounded-2xl transition-all duration-300 border ${
+                showServiceMenu
+                  ? 'bg-blue-500 border-transparent text-white shadow-lg shadow-blue-500/30 scale-105'
+                  : 'bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-400 dark:text-slate-500 border-slate-200/50 dark:border-slate-700/50'
+              } disabled:opacity-30 active:scale-95`}
+              title={systemIntegrationLabel}
+            >
+              <Settings size={20} className={showServiceMenu ? 'rotate-90' : ''} />
+            </button>
 
-          {showServiceMenu && (
-            <div className="absolute top-full right-0 mt-2 w-64 max-w-[calc(100vw-2rem)] bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 z-[220]">
+            {showServiceMenu && (
+              <div className="absolute top-full right-0 mt-2 w-64 max-w-[calc(100vw-2rem)] bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 z-[220]">
               <button
                 onClick={() => {
                   onInstall();
                   setShowServiceMenu(false);
                 }}
-                disabled={isLoading || !supportService}
+                disabled={isLoading}
                 className="w-full flex items-center gap-3.5 p-4 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-sm font-semibold transition-colors text-left disabled:opacity-30"
               >
                 <Download size={18} className="text-blue-500 shrink-0" /> <span>{installLabel}</span>
@@ -112,7 +113,7 @@ export const ServiceControlPanel: React.FC<ServiceControlPanelProps> = ({
                   onUninstall();
                   setShowServiceMenu(false);
                 }}
-                disabled={isLoading || !supportService}
+                disabled={isLoading}
                 className="w-full flex items-center gap-3.5 p-4 hover:bg-rose-50 dark:hover:bg-rose-950/30 text-slate-700 dark:text-slate-200 hover:text-rose-600 dark:hover:text-rose-400 text-sm font-semibold transition-colors border-t border-slate-100 dark:border-slate-700 text-left disabled:opacity-30"
               >
                 <Trash2 size={18} className="shrink-0" /> <span>{uninstallLabel}</span>
@@ -154,9 +155,10 @@ export const ServiceControlPanel: React.FC<ServiceControlPanelProps> = ({
                   />
                 </label>
               </div>
-            </div>
-          )}
-        </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="flex items-center gap-4">

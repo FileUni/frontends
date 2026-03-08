@@ -13,6 +13,11 @@ export interface RuntimeDirsValue {
   appDataDir: string;
 }
 
+interface RuntimeDirsPreset {
+  configDir: string;
+  appDataDir: string;
+}
+
 interface ConfigPathSelectorProps {
   isOpen: boolean;
   onClose: () => void;
@@ -21,6 +26,9 @@ interface ConfigPathSelectorProps {
   onBrowsePath: (target: 'config' | 'appData') => Promise<string | null>;
   onPreparePath: (value: RuntimeDirsValue) => Promise<void>;
   canClose?: boolean;
+  initialValue?: RuntimeDirsValue | undefined;
+  currentPreset?: RuntimeDirsPreset | undefined;
+  defaultPreset?: RuntimeDirsPreset | undefined;
 }
 
 export const ConfigPathSelector: React.FC<ConfigPathSelectorProps> = ({
@@ -31,6 +39,9 @@ export const ConfigPathSelector: React.FC<ConfigPathSelectorProps> = ({
   onBrowsePath,
   onPreparePath,
   canClose = true,
+  initialValue,
+  currentPreset,
+  defaultPreset,
 }) => {
   const { t } = useTranslation();
   const [configDir, setConfigDir] = useState('');
@@ -48,11 +59,17 @@ export const ConfigPathSelector: React.FC<ConfigPathSelectorProps> = ({
   useEffect(() => {
     if (isOpen) {
       setError(null);
-      setConfigDir('');
-      setAppDataDir('');
+      setConfigDir(initialValue?.configDir ?? defaultPreset?.configDir ?? '');
+      setAppDataDir(initialValue?.appDataDir ?? defaultPreset?.appDataDir ?? '');
       setIsSubmitting(false);
     }
-  }, [isOpen]);
+  }, [
+    isOpen,
+    initialValue?.configDir,
+    initialValue?.appDataDir,
+    defaultPreset?.configDir,
+    defaultPreset?.appDataDir,
+  ]);
 
   useEffect(() => {
     if (!isOpen || !canClose) {
@@ -185,23 +202,25 @@ export const ConfigPathSelector: React.FC<ConfigPathSelectorProps> = ({
           <div className="grid grid-cols-2 gap-2">
             <button
               onClick={() => {
-                setConfigDir('.');
-                setAppDataDir('.');
+                setConfigDir(currentPreset?.configDir ?? '');
+                setAppDataDir(currentPreset?.appDataDir ?? '');
               }}
               className="p-3 text-sm bg-slate-100 dark:bg-slate-700/50 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl transition-colors text-left"
             >
               <span className="font-medium">{t('config_selector.current_dir')}</span>
-              <span className="block text-slate-500 mt-1">./</span>
+              <span className="block text-slate-500 mt-1 break-all">{currentPreset?.configDir ?? ''}</span>
+              <span className="block text-slate-500 mt-1 break-all">{currentPreset?.appDataDir ?? ''}</span>
             </button>
             <button
               onClick={() => {
-                setConfigDir('~/.config/fileuni');
-                setAppDataDir('~/.local/share/fileuni');
+                setConfigDir(defaultPreset?.configDir ?? '');
+                setAppDataDir(defaultPreset?.appDataDir ?? '');
               }}
               className="p-3 text-sm bg-slate-100 dark:bg-slate-700/50 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl transition-colors text-left"
             >
-              <span className="font-medium">{t('config_selector.home_config')}</span>
-              <span className="block text-slate-500 mt-1">~/.config/fileuni</span>
+              <span className="font-medium">{t('config_selector.default_dir')}</span>
+              <span className="block text-slate-500 mt-1 break-all">{defaultPreset?.configDir ?? ''}</span>
+              <span className="block text-slate-500 mt-1 break-all">{defaultPreset?.appDataDir ?? ''}</span>
             </button>
           </div>
         </div>

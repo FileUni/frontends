@@ -1,12 +1,21 @@
 import { open } from '@tauri-apps/plugin-dialog';
-import { ConfigPathSelector } from '@fileuni/shared';
+import { ConfigPathSelector, type RuntimeDirsValue } from '@fileuni/shared';
 import { safeInvoke } from '../lib/tauri';
+
+interface RuntimeDirPresets {
+  current_config_dir: string;
+  current_app_data_dir: string;
+  default_config_dir: string;
+  default_app_data_dir: string;
+}
 
 interface ConfigSelectorProps {
   isOpen: boolean;
   onRuntimeDirsSelected: (configDir: string, appDataDir: string) => void;
   onClose: () => void;
   canClose?: boolean;
+  currentValue?: RuntimeDirsValue;
+  presets: RuntimeDirPresets | null;
 }
 
 export default function ConfigSelector({
@@ -14,6 +23,8 @@ export default function ConfigSelector({
   onRuntimeDirsSelected,
   onClose,
   canClose = true,
+  currentValue,
+  presets,
 }: ConfigSelectorProps) {
   const ensureNativeDialogReady = async () => {
     const ready = await safeInvoke<boolean>('prepare_native_file_dialog');
@@ -27,6 +38,15 @@ export default function ConfigSelector({
       isOpen={isOpen}
       onClose={onClose}
       canClose={canClose}
+      initialValue={currentValue}
+      currentPreset={presets ? {
+        configDir: presets.current_config_dir,
+        appDataDir: presets.current_app_data_dir,
+      } : undefined}
+      defaultPreset={presets ? {
+        configDir: presets.default_config_dir,
+        appDataDir: presets.default_app_data_dir,
+      } : undefined}
       onBrowsePath={async (_target) => {
         await ensureNativeDialogReady();
         const selected = await open({
@@ -38,8 +58,8 @@ export default function ConfigSelector({
       onValidatePath={async (value) => {
         try {
           const valid = await safeInvoke<boolean>('validate_runtime_dirs', {
-            config_dir: value.configDir,
-            app_data_dir: value.appDataDir,
+            configDir: value.configDir,
+            appDataDir: value.appDataDir,
           });
           return { valid };
         } catch (errorValue: unknown) {

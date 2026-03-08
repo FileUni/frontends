@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ask } from '@tauri-apps/plugin-dialog';
 import * as toml from 'smol-toml';
 import {
   Sun,
@@ -39,6 +38,7 @@ interface OSInfo {
   os_type: string;
   support_service: boolean;
   nixos_hint: boolean;
+  is_mobile: boolean;
 }
 
 // Service status response
@@ -59,6 +59,17 @@ interface RuntimeDirsInspection {
 interface RuntimeDirsPayload {
   config_dir: string;
   app_data_dir: string;
+}
+
+interface RuntimeDirPresets {
+  current_config_dir: string;
+  current_app_data_dir: string;
+  default_config_dir: string;
+  default_app_data_dir: string;
+}
+
+interface MissingConfigPromptState {
+  configPath: string;
 }
 
 const extractErrorMessage = (error: unknown): string => {
@@ -111,14 +122,19 @@ export default function Launcher() {
   const [configSummaryLevel, setConfigSummaryLevel] = useState<'success' | 'warning' | 'error' | 'info'>('info');
   const [isResettingAdminPassword, setIsResettingAdminPassword] = useState(false);
   const [configFilePath, setConfigFilePath] = useState('');
+  const [runtimeDirPresets, setRuntimeDirPresets] = useState<RuntimeDirPresets | null>(null);
+  const [missingConfigPrompt, setMissingConfigPrompt] = useState<MissingConfigPromptState | null>(null);
+  const displayedConfigDir = configDir ?? runtimeDirPresets?.default_config_dir ?? '...';
+  const displayedAppDataDir = appDataDir ?? runtimeDirPresets?.default_app_data_dir ?? '...';
+  const missingConfigPromptResolver = useRef<((accepted: boolean) => void) | null>(null);
 
   const inspectRuntimeDirs = async (
     nextConfigDir?: string | null,
     nextAppDataDir?: string | null,
   ) => {
     return safeInvoke<RuntimeDirsInspection>('inspect_runtime_dirs', {
-      config_dir: nextConfigDir ?? '',
-      app_data_dir: nextAppDataDir ?? '',
+      configDir: nextConfigDir ?? '',
+      appDataDir: nextAppDataDir ?? '',
     });
   };
 
@@ -128,8 +144,8 @@ export default function Launcher() {
   ) => {
     const inspected = await inspectRuntimeDirs(nextConfigDir, nextAppDataDir);
     await safeInvoke<void>('set_runtime_dirs', {
-      config_dir: inspected.config_dir,
-      app_data_dir: inspected.app_data_dir,
+      configDir: inspected.config_dir,
+      appDataDir: inspected.app_data_dir,
     });
     setRuntimeDirs(inspected.config_dir, inspected.app_data_dir);
     setConfigFilePath(inspected.config_path);
@@ -143,13 +159,12 @@ export default function Launcher() {
         return inspected;
       }
 
-      const accepted = await ask(
-        t('launcher.runtime_config_missing_prompt', { path: inspected.config_path }),
-        {
-          title: t('launcher.runtime_config_missing_title'),
-          kind: 'warning',
-        },
-      );
+      const accepted = await new Promise<boolean>((resolve) => {
+        missingConfigPromptResolver.current = resolve;
+        setMissingConfigPrompt({
+          configPath: inspected.config_path,
+        });
+      });
 
       if (!accepted) {
         toast.warning(t('launcher.runtime_config_missing_cancelled'));
@@ -157,13 +172,13 @@ export default function Launcher() {
       }
 
       const ensured = await safeInvoke<RuntimeDirsInspection>('ensure_runtime_config', {
-        config_dir: inspected.config_dir,
-        app_data_dir: inspected.app_data_dir,
+        configDir: inspected.config_dir,
+        appDataDir: inspected.app_data_dir,
       });
 
       await safeInvoke<void>('set_runtime_dirs', {
-        config_dir: ensured.config_dir,
-        app_data_dir: ensured.app_data_dir,
+        configDir: ensured.config_dir,
+        appDataDir: ensured.app_data_dir,
       });
       setRuntimeDirs(ensured.config_dir, ensured.app_data_dir);
       setConfigFilePath(ensured.config_path);
@@ -173,6 +188,12 @@ export default function Launcher() {
       toast.error(extractErrorMessage(error));
       return null;
     }
+  };
+
+  const closeMissingConfigPrompt = (accepted: boolean) => {
+    setMissingConfigPrompt(null);
+    missingConfigPromptResolver.current?.(accepted);
+    missingConfigPromptResolver.current = null;
   };
 
   useEffect(() => {
@@ -233,6 +254,40 @@ export default function Launcher() {
       cancelled = true;
     };
   }, [configDir, appDataDir]);
+
+  useEffect(() => {
+    if (!isTauriRuntime()) {
+      return;
+    }
+
+    safeInvoke<RuntimeDirPresets>('get_runtime_dir_presets')
+      .then((presets) => {
+        setRuntimeDirPresets(presets);
+      })
+      .catch(console.error);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      missingConfigPromptResolver.current?.(false);
+      missingConfigPromptResolver.current = null;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!missingConfigPrompt) {
+      return undefined;
+    }
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        closeMissingConfigPrompt(false);
+      }
+    };
+
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [missingConfigPrompt]);
 
   const handleRuntimeDirsSelected = async (nextConfigDir: string, nextAppDataDir: string) => {
     try {
@@ -672,11 +727,11 @@ export default function Launcher() {
                             <div className="text-sm font-black uppercase tracking-wider text-slate-400 dark:text-slate-500">{t('launcher.runtime_paths')}</div>
                             <div>
                               <div className="text-xs font-bold uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500 mb-1">{t('launcher.config_dir')}</div>
-                              <div className="text-sm font-mono text-slate-600 dark:text-slate-300 break-all">{configDir ?? '...'}</div>
+                              <div className="text-sm font-mono text-slate-600 dark:text-slate-300 break-all">{displayedConfigDir}</div>
                             </div>
                             <div>
                               <div className="text-xs font-bold uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500 mb-1">{t('launcher.app_data_dir')}</div>
-                              <div className="text-sm font-mono text-slate-500 dark:text-slate-400 break-all">{appDataDir ?? '...'}</div>
+                              <div className="text-sm font-mono text-slate-500 dark:text-slate-400 break-all">{displayedAppDataDir}</div>
                             </div>
                           </div>
                         </div>
@@ -743,8 +798,47 @@ export default function Launcher() {
         isOpen={showConfigSelector}
         onRuntimeDirsSelected={handleRuntimeDirsSelected}
         canClose={true}
+        currentValue={{
+          configDir: displayedConfigDir === '...' ? '' : displayedConfigDir,
+          appDataDir: displayedAppDataDir === '...' ? '' : displayedAppDataDir,
+        }}
+        presets={runtimeDirPresets}
         onClose={() => setShowConfigSelector(false)}
       />
+
+      {missingConfigPrompt && (
+        <div className="fixed inset-0 z-[130] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="w-full max-w-lg rounded-3xl border border-slate-200/70 dark:border-slate-700/60 bg-white/95 dark:bg-slate-900/95 shadow-2xl overflow-hidden">
+            <div className="px-6 py-5 border-b border-slate-200/70 dark:border-slate-700/60">
+              <h2 className="text-lg font-black tracking-tight text-slate-900 dark:text-slate-100">
+                {t('launcher.runtime_config_missing_title')}
+              </h2>
+            </div>
+            <div className="px-6 py-5 space-y-4">
+              <p className="text-sm leading-6 text-slate-600 dark:text-slate-300">
+                {t('launcher.runtime_config_missing_prompt', { path: missingConfigPrompt.configPath })}
+              </p>
+              <div className="rounded-2xl bg-slate-100/80 dark:bg-slate-800/80 px-4 py-3 text-sm font-mono break-all text-slate-700 dark:text-slate-200">
+                {missingConfigPrompt.configPath}
+              </div>
+            </div>
+            <div className="px-6 py-5 border-t border-slate-200/70 dark:border-slate-700/60 flex items-center justify-end gap-3 bg-slate-50/80 dark:bg-slate-950/40">
+              <button
+                onClick={() => closeMissingConfigPrompt(false)}
+                className="px-4 py-2.5 rounded-xl text-sm font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-200/70 dark:hover:bg-slate-800 transition-colors"
+              >
+                {t('launcher.runtime_config_missing_reject')}
+              </button>
+              <button
+                onClick={() => closeMissingConfigPrompt(true)}
+                className="px-5 py-2.5 rounded-xl text-sm font-bold text-white bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 shadow-lg shadow-blue-500/25 transition-all"
+              >
+                {t('launcher.runtime_config_missing_accept')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <AdminPasswordPanel
         mode="modal"
