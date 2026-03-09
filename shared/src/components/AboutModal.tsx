@@ -1,23 +1,22 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   BookOpen,
   Calendar,
   CheckCircle2,
   Download,
   ExternalLink,
-  GitBranch,
   Github,
   Globe,
   Info,
   Loader2,
   RefreshCcw,
   Sparkles,
-  TriangleAlert,
   X,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { cn } from '../lib/utils';
 import { Button } from './ui/Button';
+import { useThemeStore } from '../stores/theme';
 
 const PROJECT_HOMEPAGE_URL = 'https://fileuni.com';
 const PROJECT_DOCS_URL = 'https://docs.fileuni.com';
@@ -53,40 +52,48 @@ export interface AboutModalProps {
   zIndex?: number;
 }
 
-// Modern vertical card link for better space utilization
 const LinkCard: React.FC<{
   href: string;
   label: string;
   icon: React.ComponentType<{ size?: number; className?: string }>;
   onOpenLink?: (url: string) => void;
-}> = ({ href, label, icon: Icon, onOpenLink }) => {
+  isDark: boolean;
+}> = ({ href, label, icon: Icon, onOpenLink, isDark }) => {
   const className = cn(
-    'group flex flex-col items-center justify-center gap-3 rounded-2xl border border-border/40 bg-secondary/20 p-4 transition-all duration-300',
-    'hover:bg-secondary/40 hover:border-primary/20 hover:-translate-y-1 hover:shadow-lg hover:shadow-primary/5'
+    'group flex flex-col items-center justify-center gap-3 rounded-2xl border transition-all duration-300',
+    isDark 
+      ? 'border-white/10 bg-white/[0.03] hover:bg-white/[0.08] hover:border-primary/30' 
+      : 'border-gray-200 bg-gray-50 hover:bg-white hover:border-primary/30 shadow-sm hover:shadow-md'
   );
 
   const content = (
     <>
-      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-background shadow-sm ring-1 ring-border/50 group-hover:scale-110 group-hover:ring-primary/20 transition-all duration-300">
-        <Icon size={20} className="text-foreground/80 group-hover:text-primary transition-colors" />
+      <div className={cn(
+        "flex h-10 w-10 items-center justify-center rounded-xl transition-all duration-300 shadow-inner border",
+        isDark ? "bg-white/5 border-white/10 group-hover:text-primary" : "bg-white border-gray-200 group-hover:text-primary"
+      )}>
+        <Icon size={20} />
       </div>
-      <div className="flex items-center gap-1.5">
-        <span className="text-xs font-bold text-muted-foreground group-hover:text-foreground transition-colors">{label}</span>
-        <ExternalLink size={10} className="opacity-0 -translate-x-1 group-hover:opacity-40 group-hover:translate-x-0 transition-all" />
+      <div className="flex items-center gap-1.5 px-2 w-full justify-center">
+        <span className={cn(
+          "text-xs font-black uppercase tracking-tight truncate",
+          isDark ? "text-slate-400 group-hover:text-white" : "text-slate-600 group-hover:text-slate-900"
+        )}>{label}</span>
+        <ExternalLink size={10} className="opacity-30 shrink-0" />
       </div>
     </>
   );
 
   if (onOpenLink) {
     return (
-      <button type="button" onClick={() => onOpenLink(href)} className={className}>
+      <button type="button" onClick={() => onOpenLink(href)} className={cn(className, "py-4 w-full")}>
         {content}
       </button>
     );
   }
 
   return (
-    <a href={href} target="_blank" rel="noopener noreferrer" className={className}>
+    <a href={href} target="_blank" rel="noopener noreferrer" className={cn(className, "py-4")}>
       {content}
     </a>
   );
@@ -97,31 +104,38 @@ const ReleaseRow: React.FC<{
   title: string;
   onOpenLink?: (url: string) => void;
   t: any;
-}> = ({ info, title, onOpenLink, t }) => {
+  isDark: boolean;
+}> = ({ info, title, onOpenLink, t, isDark }) => {
   const downloadUrl = info.target_download_url || info.release_page_url;
   
   return (
-    <div className="group relative overflow-hidden rounded-xl border border-border/50 bg-secondary/10 p-4 transition-all hover:bg-secondary/20">
+    <div className={cn(
+      "group relative overflow-hidden rounded-xl border p-4 transition-all",
+      isDark ? "border-white/10 bg-white/[0.02] hover:bg-white/[0.05]" : "border-gray-200 bg-gray-50 hover:bg-white hover:shadow-sm"
+    )}>
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0 flex-1 space-y-1.5">
           <div className="flex items-center gap-2">
             <span className={cn(
               "text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-md border",
               info.channel === 'prerelease' 
-                ? "border-fuchsia-500/30 text-fuchsia-600 dark:text-fuchsia-400 bg-fuchsia-500/5" 
+                ? "border-fuchsia-500/30 text-fuchsia-600 bg-fuchsia-500/5" 
                 : "border-primary/30 text-primary bg-primary/5"
             )}>
               {title}
             </span>
             {info.has_update && (
-              <span className="flex items-center gap-1 text-[10px] font-bold text-amber-500 animate-pulse">
+              <span className="flex items-center gap-1 text-[10px] font-black text-amber-600 dark:text-amber-500 animate-pulse uppercase tracking-widest">
                 <Sparkles size={10} /> {t('about.state.updateAvailable')}
               </span>
             )}
           </div>
-          <div className="font-mono text-sm font-bold text-foreground tracking-tight">{info.version}</div>
+          <div className={cn(
+            "font-mono text-sm font-black tracking-tight",
+            isDark ? "text-white" : "text-slate-950"
+          )}>{info.version}</div>
           {info.published_at && (
-            <div className="flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground/70">
+            <div className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-tighter opacity-40">
               <Calendar size={12} />
               {info.published_at}
             </div>
@@ -131,7 +145,7 @@ const ReleaseRow: React.FC<{
         <div className="flex flex-col gap-2">
           <Button
             size="sm"
-            variant="default"
+            variant={isDark ? "primary" : "outline"}
             className="h-8 w-8 rounded-lg p-0 shadow-sm"
             onClick={() => onOpenLink ? onOpenLink(downloadUrl) : window.open(downloadUrl, '_blank')}
             title={t('about.downloadChannel')}
@@ -166,6 +180,12 @@ export const AboutModal: React.FC<AboutModalProps> = ({
   zIndex = 130,
 }) => {
   const { t } = useTranslation();
+  const { theme } = useThemeStore();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -176,6 +196,7 @@ export const AboutModal: React.FC<AboutModalProps> = ({
 
   if (!isOpen) return null;
 
+  const isDark = theme === 'dark' || (theme === 'system' && mounted && typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches);
   const currentVersionText = currentVersion || '—';
   const currentChannel = updateInfo?.current_channel || 'stable';
 
@@ -186,63 +207,86 @@ export const AboutModal: React.FC<AboutModalProps> = ({
       aria-modal="true"
       style={{ zIndex }}
     >
-      {/* Background Overlay: Maximum isolation */}
-      <div className="absolute inset-0 bg-black/95 backdrop-blur-2xl transition-opacity" onClick={onClose} />
+      {/* Background Overlay: Strong isolation */}
+      <div className={cn(
+        "absolute inset-0 backdrop-blur-2xl transition-opacity",
+        isDark ? "bg-black/95" : "bg-slate-900/80"
+      )} onClick={onClose} />
 
-      {/* Main Container: Solid Opaque Background */}
-      <div className="relative flex w-full max-w-[480px] flex-col overflow-hidden rounded-2xl border border-border bg-background shadow-[0_0_50px_-12px_rgba(0,0,0,0.5)] ring-1 ring-white/10 animate-in fade-in zoom-in-95 duration-200">
+      {/* Main Container: Fully Opaque */}
+      <div className={cn(
+        "relative flex w-full max-w-[480px] flex-col overflow-hidden rounded-2xl border shadow-[0_20px_70px_-15px_rgba(0,0,0,0.5)] animate-in fade-in zoom-in-95 duration-200",
+        isDark ? "border-white/10 bg-slate-950 text-white ring-1 ring-white/5" : "border-gray-200 bg-white text-slate-900"
+      )}>
         
-        {/* Modern Header: Solid, no transparency */}
-        <div className="relative flex flex-col items-center px-6 pt-12 pb-8 text-center bg-background border-b border-border/50">
+        {/* Modern Header: Solid background */}
+        <div className={cn(
+          "relative flex flex-col items-center px-6 pt-12 pb-8 text-center border-b",
+          isDark ? "bg-slate-950 border-white/5" : "bg-gray-50/50 border-gray-100"
+        )}>
            <button
             onClick={onClose}
-            className="absolute right-4 top-4 rounded-full p-2 text-muted-foreground/50 hover:bg-secondary hover:text-foreground transition-all"
+            className={cn(
+              "absolute right-4 top-4 rounded-full p-2 transition-all",
+              isDark ? "text-slate-500 hover:bg-white/5 hover:text-white" : "text-slate-400 hover:bg-gray-200 hover:text-slate-900"
+            )}
           >
             <X size={20} />
           </button>
 
-          <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary shadow-lg shadow-primary/20 ring-4 ring-background">
-            <Info size={32} className="text-primary-foreground" />
+          <div className={cn(
+            "mb-5 flex h-16 w-16 items-center justify-center rounded-2xl shadow-lg ring-4",
+            isDark ? "bg-primary text-primary-foreground shadow-primary/20 ring-slate-950" : "bg-primary text-white shadow-primary/30 ring-white"
+          )}>
+            <Info size={32} />
           </div>
           
-          <h2 className="text-2xl font-black tracking-tight text-foreground">FileUni</h2>
+          <h2 className="text-2xl font-black tracking-tight uppercase">FileUni</h2>
           
-          <div className="mt-3 flex items-center gap-2 rounded-full border border-border bg-secondary px-4 py-1">
-            <span className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">Version</span>
-            <span className="text-xs font-mono font-bold text-foreground">{currentVersionText}</span>
+          <div className={cn(
+            "mt-3 flex items-center gap-2 rounded-full border px-4 py-1",
+            isDark ? "border-white/10 bg-white/5" : "border-gray-200 bg-white shadow-sm"
+          )}>
+            <span className={cn("text-[10px] font-black uppercase tracking-[0.2em]", isDark ? "text-slate-500" : "text-slate-400")}>Version</span>
+            <span className="text-xs font-mono font-black text-primary">{currentVersionText}</span>
           </div>
 
-          <p className="mt-5 max-w-[320px] text-sm font-medium leading-relaxed text-muted-foreground/80">
+          <p className={cn(
+            "mt-5 max-w-[320px] text-sm font-bold leading-relaxed",
+            isDark ? "text-slate-400" : "text-slate-500"
+          )}>
             {t('about.subtitle')}
           </p>
         </div>
 
-        <div className="flex-1 space-y-8 px-8 pb-8 bg-background pt-8">
-          {/* Links Grid: Solid Cards */}
+        <div className={cn("flex-1 space-y-8 px-8 pb-8 pt-8", isDark ? "bg-slate-950" : "bg-white")}>
+          {/* Links Grid: Adaptive Cards */}
           <div className="grid grid-cols-3 gap-3">
-            <LinkCard href={PROJECT_HOMEPAGE_URL} label={t('about.links.website')} icon={Globe} onOpenLink={onOpenLink} />
-            <LinkCard href={PROJECT_DOCS_URL} label={t('about.links.docs')} icon={BookOpen} onOpenLink={onOpenLink} />
-            <LinkCard href={PROJECT_REPOSITORY_URL} label="GitHub" icon={Github} onOpenLink={onOpenLink} />
+            <LinkCard href={PROJECT_HOMEPAGE_URL} label={t('about.links.website')} icon={Globe} onOpenLink={onOpenLink} isDark={isDark} />
+            <LinkCard href={PROJECT_DOCS_URL} label={t('about.links.docs')} icon={BookOpen} onOpenLink={onOpenLink} isDark={isDark} />
+            <LinkCard href={PROJECT_REPOSITORY_URL} label="GitHub" icon={Github} onOpenLink={onOpenLink} isDark={isDark} />
           </div>
 
           {/* Update Section */}
           {showCheckUpdates && (
             <div className="space-y-4">
-              <div className="h-px w-full bg-border/50" />
+              <div className={cn("h-px w-full", isDark ? "bg-white/5" : "bg-gray-100")} />
               
-              {/* Header / Action Bar: Opaque */}
-              <div className="flex items-center justify-between rounded-xl border border-border/60 bg-secondary p-1.5 pl-4 shadow-sm">
-                <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+              <div className={cn(
+                "flex items-center justify-between rounded-xl border p-1.5 pl-4 shadow-sm",
+                isDark ? "border-white/10 bg-slate-900" : "border-gray-200 bg-gray-50"
+              )}>
+                <div className={cn("flex items-center gap-2 text-[10px] font-black uppercase tracking-widest", isDark ? "text-slate-500" : "text-slate-400")}>
                   <Sparkles size={14} className="text-primary" />
                   {t('about.updateSectionTitle')}
                 </div>
                 {onCheckUpdates && (
                   <Button
                     size="sm"
-                    variant="secondary"
+                    variant={isDark ? "secondary" : "outline"}
                     onClick={() => void onCheckUpdates()}
                     disabled={isCheckingUpdates}
-                    className="h-8 gap-2 rounded-lg text-[11px] font-black uppercase tracking-wider shadow-sm border border-border/50"
+                    className="h-8 gap-2 rounded-lg text-[11px] font-black uppercase tracking-wider shadow-sm"
                   >
                     {isCheckingUpdates ? <Loader2 size={12} className="animate-spin" /> : <RefreshCcw size={12} />}
                     {isCheckingUpdates ? t('about.checking') : t('about.checkUpdates')}
@@ -250,19 +294,18 @@ export const AboutModal: React.FC<AboutModalProps> = ({
                 )}
               </div>
 
-              {/* Status Display: Solid background */}
               {updateError ? (
-                <div className="rounded-xl border border-destructive/30 bg-destructive/10 p-5 text-center shadow-inner">
+                <div className="rounded-xl border border-destructive/30 bg-destructive/10 p-4 text-center shadow-inner">
                   <div className="text-[10px] font-black text-destructive uppercase tracking-widest">{t('about.updateError')}</div>
-                  <div className="mt-2 text-xs font-bold text-destructive/80">{updateError}</div>
+                  <div className="mt-1 text-xs font-bold text-destructive/80">{updateError}</div>
                 </div>
               ) : updateInfo ? (
                 <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
                   <div className={cn(
-                    'flex items-center justify-center gap-2.5 py-2 text-[11px] font-black uppercase tracking-[0.2em]',
-                    updateInfo.has_update ? 'text-amber-500' : 'text-emerald-500'
+                    'flex items-center justify-center gap-2.5 py-1 text-xs font-black uppercase tracking-[0.15em]',
+                    updateInfo.has_update ? 'text-amber-600' : 'text-emerald-600'
                   )}>
-                    {updateInfo.has_update ? <Download size={16} className="animate-bounce" /> : <CheckCircle2 size={16} />}
+                    {updateInfo.has_update ? <Download size={14} className="animate-bounce" /> : <CheckCircle2 size={14} />}
                     <span>
                       {updateInfo.has_update
                         ? t('about.updateAvailableForCurrentChannel', { channel: t(`about.channels.${currentChannel}`) })
@@ -277,6 +320,7 @@ export const AboutModal: React.FC<AboutModalProps> = ({
                         title={t('about.channels.stable')} 
                         onOpenLink={onOpenLink}
                         t={t}
+                        isDark={isDark}
                       />
                     )}
                     {updateInfo.prerelease && (
@@ -285,6 +329,7 @@ export const AboutModal: React.FC<AboutModalProps> = ({
                         title={t('about.channels.prerelease')} 
                         onOpenLink={onOpenLink}
                         t={t}
+                        isDark={isDark}
                       />
                     )}
                   </div>
@@ -295,13 +340,14 @@ export const AboutModal: React.FC<AboutModalProps> = ({
         </div>
 
         {/* Minimal Footer: Solid and centered */}
-        <div className="flex items-center justify-between border-t border-border/50 bg-secondary px-8 py-5 text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground/40">
-           <span>FileUni Project</span>
+        <div className={cn(
+          "flex items-center justify-between border-t px-8 py-5 text-[10px] font-black uppercase tracking-[0.3em]",
+          isDark ? "border-white/5 bg-slate-900/50 text-slate-600" : "border-gray-100 bg-gray-50 text-slate-400"
+        )}>
+           <span className="opacity-80">FileUni Project</span>
            <span className="opacity-50">© {new Date().getFullYear()}</span>
         </div>
       </div>
     </div>
   );
 };
-
-

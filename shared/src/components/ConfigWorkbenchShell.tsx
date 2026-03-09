@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { X } from 'lucide-react';
 import { cn } from '../lib/utils';
+import { useThemeStore } from '../stores/theme';
 
 interface ConfigWorkbenchShellProps {
   title: string;
@@ -23,25 +24,41 @@ export const ConfigWorkbenchShell: React.FC<ConfigWorkbenchShellProps> = ({
   bodyClassName,
   children,
 }) => {
+  const { theme } = useThemeStore();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const isDark = theme === 'dark' || (theme === 'system' && mounted && typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+
   return (
     <div className={cn(
-      'h-full w-full rounded-2xl sm:rounded-3xl border border-white/15 bg-slate-950/95 text-slate-100 shadow-2xl flex flex-col overflow-hidden',
+      'h-full w-full rounded-2xl sm:rounded-3xl border shadow-2xl flex flex-col overflow-hidden transition-all duration-300',
+      isDark ? 'border-white/10 bg-slate-950 text-slate-100' : 'border-slate-200 bg-white text-slate-900',
       containerClassName,
     )}>
-      <div className="h-14 shrink-0 px-3 sm:px-5 border-b border-white/10 flex items-center justify-between gap-3">
+      <div className={cn(
+        "h-14 shrink-0 px-3 sm:px-5 border-b flex items-center justify-between gap-3",
+        isDark ? "border-white/10 bg-slate-900/50" : "border-slate-100 bg-slate-50/50"
+      )}>
         <div className="min-w-0">
           <div className="text-sm sm:text-base font-black uppercase tracking-wide truncate">{title}</div>
           {subtitle ? (
-            <div className="text-sm sm:text-sm text-slate-400 truncate">{subtitle}</div>
+            <div className={cn("text-xs sm:text-sm truncate font-bold", isDark ? "text-slate-400" : "text-slate-500")}>{subtitle}</div>
           ) : configPath ? (
-            <div className="text-sm sm:text-sm font-mono text-slate-400 truncate">{configPath}</div>
+            <div className="text-xs sm:text-sm font-mono text-slate-400 truncate">{configPath}</div>
           ) : null}
         </div>
         {onClose && (
           <button
             type="button"
             onClick={onClose}
-            className="h-8 w-8 rounded-lg border border-white/20 text-slate-300 hover:bg-white/10 inline-flex items-center justify-center"
+            className={cn(
+              "h-8 w-8 rounded-lg border inline-flex items-center justify-center transition-colors",
+              isDark ? "border-white/20 text-slate-300 hover:bg-white/10" : "border-slate-200 text-slate-600 hover:bg-slate-100"
+            )}
             aria-label={closeAriaLabel}
           >
             <X size={16} />
@@ -54,3 +71,4 @@ export const ConfigWorkbenchShell: React.FC<ConfigWorkbenchShellProps> = ({
     </div>
   );
 };
+

@@ -1,33 +1,24 @@
 //  License Management Modal
 //  Standalone modal for viewing license status and applying license keys.
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { X, Shield, Users, Fingerprint, Key, Loader2 } from 'lucide-react';
 import { cn } from '../lib/utils';
+import { useThemeStore } from '../stores/theme';
 
 export interface LicenseManagementModalProps {
   isOpen: boolean;
   onClose: () => void;
-  /** Whether the current license is valid */
   isValid: boolean;
-  /** Current number of users */
   currentUsers: number;
-  /** Maximum allowed users */
   maxUsers: number;
-  /** Device code (hardware fingerprint) */
   deviceCode: string;
-  /** Current license key input value */
   licenseKey: string;
-  /** Whether the license is being saved */
   saving: boolean;
-  /** Callback when license key changes */
   onLicenseKeyChange: (value: string) => void;
-  /** Callback when applying license */
   onApplyLicense: () => void;
-  /** Optional: license expiration date */
   expiresAt?: string | null;
-  /** Optional: list of enabled features */
   features?: string[];
 }
 
@@ -46,52 +37,50 @@ export const LicenseManagementModal: React.FC<LicenseManagementModalProps> = ({
   features,
 }) => {
   const { t } = useTranslation();
+  const { theme } = useThemeStore();
+  const [mounted, setMounted] = useState(false);
 
-  // Handle ESC key to close modal
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const isDark = theme === 'dark' || (theme === 'system' && mounted && typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+
   useEffect(() => {
     if (!isOpen) return undefined;
-
     const handleEsc = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        onClose();
-      }
+      if (event.key === 'Escape') onClose();
     };
-
     window.addEventListener('keydown', handleEsc);
     return () => window.removeEventListener('keydown', handleEsc);
   }, [isOpen, onClose]);
 
-  if (!isOpen) {
-    return null;
-  }
+  if (!isOpen) return null;
 
   return (
     <div
       className="fixed inset-0 z-[130] flex items-center justify-center p-2 sm:p-4"
       role="dialog"
       aria-modal="true"
-      aria-labelledby="license-modal-title"
     >
-      {/* Backdrop */}
-      <div
-        className="absolute inset-0 bg-black/70 backdrop-blur-sm"
-        onClick={onClose}
-      />
+      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
 
-      {/* Modal Content */}
-      <div className="relative w-full max-w-lg max-h-[90vh] rounded-2xl border border-white/10 bg-slate-950 text-slate-100 shadow-2xl overflow-hidden">
+      <div className={cn(
+        "relative w-full max-w-lg max-h-[90vh] rounded-2xl border shadow-2xl overflow-hidden flex flex-col transition-all duration-300",
+        isDark ? "bg-slate-950 border-white/10 text-slate-100" : "bg-white border-gray-200 text-slate-900"
+      )}>
         {/* Header */}
-        <div className="flex items-center justify-between gap-2 border-b border-white/10 px-4 py-3 sm:px-5">
+        <div className={cn(
+          "flex items-center justify-between gap-2 border-b px-4 py-3 sm:px-5",
+          isDark ? "border-white/10 bg-slate-900/50" : "border-gray-100 bg-gray-50/50"
+        )}>
           <div className="flex items-center gap-2 min-w-0">
-            <Key size={18} className="text-amber-400 shrink-0" />
+            <Key size={18} className="text-amber-500 shrink-0" />
             <div className="min-w-0">
-              <h3
-                id="license-modal-title"
-                className="text-sm sm:text-base font-black uppercase tracking-wide truncate"
-              >
+              <h3 className="text-sm sm:text-base font-black uppercase tracking-wide truncate">
                 {t('admin.config.quickWizard.steps.license')}
               </h3>
-              <p className="text-sm sm:text-sm text-slate-400">
+              <p className={cn("text-xs font-bold uppercase tracking-widest", isDark ? "text-slate-500" : "text-slate-400")}>
                 {t('admin.config.quickWizard.fields.licenseStatus')}
               </p>
             </div>
@@ -99,105 +88,76 @@ export const LicenseManagementModal: React.FC<LicenseManagementModalProps> = ({
           <button
             type="button"
             onClick={onClose}
-            className="h-8 w-8 rounded-lg border border-white/15 text-slate-300 hover:bg-white/10 inline-flex items-center justify-center transition-colors"
-            aria-label={t('common.close')}
+            className={cn(
+              "h-8 w-8 rounded-lg border inline-flex items-center justify-center transition-colors",
+              isDark ? "border-white/15 text-slate-300 hover:bg-white/10" : "border-gray-200 text-slate-600 hover:bg-gray-100"
+            )}
           >
             <X size={16} />
           </button>
         </div>
 
         {/* Body */}
-        <div className="p-4 sm:p-5 space-y-4 overflow-y-auto max-h-[calc(90vh-140px)]">
-          {/* Status Cards */}
+        <div className="p-4 sm:p-6 space-y-6 overflow-y-auto custom-scrollbar">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {/* Authorization Status */}
-            <div className="rounded-xl border border-white/10 bg-black/20 p-3">
-              <div className="flex items-center gap-2 mb-1">
-                <Shield size={18} className={cn(
-                  'shrink-0',
-                  isValid ? 'text-emerald-400' : 'text-red-400'
-                )} />
-                <div className="text-sm uppercase opacity-60">
+            <div className={cn(
+              "rounded-xl border p-4 transition-colors",
+              isDark ? "bg-white/[0.02] border-white/5" : "bg-gray-50 border-gray-100 shadow-sm"
+            )}>
+              <div className="flex items-center gap-2 mb-2">
+                <Shield size={18} className={cn('shrink-0', isValid ? 'text-emerald-500' : 'text-rose-500')} />
+                <div className="text-[10px] font-black uppercase tracking-widest opacity-40">
                   {t('admin.config.quickWizard.fields.licenseStatus')}
                 </div>
               </div>
-              <div className={cn(
-                'text-sm font-bold',
-                isValid ? 'text-emerald-300' : 'text-red-300'
-              )}>
+              <div className={cn('text-sm font-black uppercase tracking-tight', isValid ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400')}>
                 {isValid
                   ? t('admin.config.quickWizard.options.licenseAuthorized')
                   : t('admin.config.quickWizard.options.licenseUnauthorized')}
               </div>
             </div>
 
-            {/* User Quota */}
-            <div className="rounded-xl border border-white/10 bg-black/20 p-3">
-              <div className="flex items-center gap-2 mb-1">
-                <Users size={18} className="text-cyan-400 shrink-0" />
-                <div className="text-sm uppercase opacity-60">
+            <div className={cn(
+              "rounded-xl border p-4 transition-colors",
+              isDark ? "bg-white/[0.02] border-white/5" : "bg-gray-50 border-gray-100 shadow-sm"
+            )}>
+              <div className="flex items-center gap-2 mb-2">
+                <Users size={18} className="text-cyan-500 shrink-0" />
+                <div className="text-[10px] font-black uppercase tracking-widest opacity-40">
                   {t('admin.config.quickWizard.fields.maxUsers')}
                 </div>
               </div>
-              <div className="text-sm font-bold">
+              <div className="text-sm font-black font-mono">
                 {currentUsers} / {maxUsers}
               </div>
             </div>
 
-            {/* Hardware Fingerprint */}
-            <div className="rounded-xl border border-white/10 bg-black/20 p-3 sm:col-span-2">
-              <div className="flex items-center gap-2 mb-1">
-                <Fingerprint size={18} className="text-purple-400 shrink-0" />
-                <div className="text-sm uppercase opacity-60">
+            <div className={cn(
+              "rounded-xl border p-4 sm:col-span-2 transition-colors",
+              isDark ? "bg-black/40 border-white/5" : "bg-zinc-100 border-gray-200 shadow-inner"
+            )}>
+              <div className="flex items-center gap-2 mb-2">
+                <Fingerprint size={18} className="text-purple-500 shrink-0" />
+                <div className="text-[10px] font-black uppercase tracking-widest opacity-40">
                   {t('admin.config.quickWizard.fields.hwFingerprint')}
                 </div>
               </div>
-              <div className="text-sm sm:text-sm font-mono break-all select-all">
+              <div className="text-xs font-mono break-all select-all font-bold opacity-80">
                 {deviceCode || '-'}
               </div>
             </div>
-
-            {/* Expiration Date (if provided) */}
-            {expiresAt && (
-              <div className="rounded-xl border border-white/10 bg-black/20 p-3 sm:col-span-2">
-                <div className="text-sm uppercase opacity-60 mb-1">
-                  {t('admin.config.quickWizard.fields.expiresAt') || 'Expires At'}
-                </div>
-                <div className="text-sm font-bold">
-                  {expiresAt}
-                </div>
-              </div>
-            )}
-
-            {/* Enabled Features (if provided) */}
-            {features && features.length > 0 && (
-              <div className="rounded-xl border border-white/10 bg-black/20 p-3 sm:col-span-2">
-                <div className="text-sm uppercase opacity-60 mb-2">
-                  {t('admin.config.quickWizard.fields.features') || 'Enabled Features'}
-                </div>
-                <div className="flex flex-wrap gap-1.5">
-                  {features.map((feature) => (
-                    <span
-                      key={feature}
-                      className="text-sm px-2 py-0.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 text-emerald-300 font-mono"
-                    >
-                      {feature}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
           </div>
 
-          {/* License Key Input */}
-          <div className="space-y-2">
-            <label className="text-sm font-semibold flex items-center gap-1.5">
-              <Key size={18} />
+          <div className="space-y-3">
+            <label className="text-xs font-black uppercase tracking-widest opacity-40 ml-1 flex items-center gap-2">
+              <Key size={14} />
               {t('admin.config.quickWizard.fields.licenseKey')}
             </label>
-            <input
-              type="text"
-              className="w-full h-10 rounded-lg border border-white/15 bg-black/30 px-3 text-sm focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-colors"
+            <textarea
+              className={cn(
+                "w-full min-h-[80px] rounded-xl border p-3 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all shadow-inner",
+                isDark ? "bg-black/40 border-white/10" : "bg-white border-gray-200"
+              )}
               value={licenseKey}
               placeholder={t('admin.config.quickWizard.fields.licenseInputPlaceholder')}
               onChange={(e) => onLicenseKeyChange(e.target.value)}
@@ -205,28 +165,23 @@ export const LicenseManagementModal: React.FC<LicenseManagementModalProps> = ({
             />
           </div>
 
-          {/* Apply Button */}
           <div className="flex justify-end">
-            <button
-              type="button"
-              className={cn(
-                'h-9 px-4 rounded-lg border text-sm sm:text-sm font-bold transition-colors inline-flex items-center gap-2',
-                saving || licenseKey.trim().length === 0
-                  ? 'border-white/10 bg-white/5 text-slate-500 cursor-not-allowed'
-                  : 'border-primary bg-primary text-primary-foreground hover:opacity-90'
-              )}
+            <Button
               onClick={onApplyLicense}
-              disabled={saving || licenseKey.trim().length === 0}
+              disabled={saving || !licenseKey.trim()}
+              className="px-8 h-11 rounded-xl shadow-xl shadow-primary/20"
             >
-              {saving && <Loader2 size={18} className="animate-spin" />}
+              {saving ? <Loader2 size={18} className="animate-spin mr-2" /> : <Shield size={18} className="mr-2" />}
               {t('admin.config.quickWizard.actions.applyLicense')}
-            </button>
+            </Button>
           </div>
         </div>
 
-        {/* Footer Hint */}
-        <div className="border-t border-white/10 px-4 py-2.5 sm:px-5 bg-black/20">
-          <p className="text-sm sm:text-sm text-slate-500">
+        <div className={cn(
+          "border-t px-5 py-4",
+          isDark ? "border-white/5 bg-black/20 text-slate-500" : "border-gray-100 bg-gray-50 text-slate-400"
+        )}>
+          <p className="text-xs font-bold leading-relaxed italic">
             {t('admin.config.quickWizard.fields.licenseHint')}
           </p>
         </div>
@@ -234,3 +189,4 @@ export const LicenseManagementModal: React.FC<LicenseManagementModalProps> = ({
     </div>
   );
 };
+
