@@ -6,12 +6,14 @@ import {
   Download,
   ExternalLink,
   GitBranch,
+  Github,
   Globe,
   Info,
   Loader2,
   RefreshCcw,
   Sparkles,
   TriangleAlert,
+  X,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { cn } from '../lib/utils';
@@ -51,45 +53,28 @@ export interface AboutModalProps {
   zIndex?: number;
 }
 
-interface LinkActionProps {
+// Modern vertical card link for better space utilization
+const LinkCard: React.FC<{
   href: string;
   label: string;
-  subtitle: string;
   icon: React.ComponentType<{ size?: number; className?: string }>;
   onOpenLink?: (url: string) => void;
-}
-
-interface ReleaseCardProps {
-  info: AboutReleaseChannelInfo;
-  title: string;
-  currentChannel: string;
-  onOpenLink?: (url: string) => void;
-  downloadLabel: string;
-  releasePageLabel: string;
-  latestVersionLabel: string;
-  publishedAtLabel: string;
-  currentChannelLabel: string;
-  updateAvailableLabel: string;
-  upToDateLabel: string;
-}
-
-const LinkAction: React.FC<LinkActionProps> = ({ href, label, subtitle, icon: Icon, onOpenLink }) => {
-  const content = (
-    <>
-      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-primary/15 bg-primary/10 text-primary shadow-inner">
-        <Icon size={18} />
-      </div>
-      <div className="min-w-0 flex-1 text-left">
-        <div className="truncate text-sm font-black uppercase tracking-wide text-foreground">{label}</div>
-        <div className="truncate text-sm font-bold text-muted-foreground">{subtitle}</div>
-      </div>
-      <ExternalLink size={16} className="shrink-0 text-muted-foreground" />
-    </>
+}> = ({ href, label, icon: Icon, onOpenLink }) => {
+  const className = cn(
+    'group flex flex-col items-center justify-center gap-3 rounded-2xl border border-border/40 bg-secondary/20 p-4 transition-all duration-300',
+    'hover:bg-secondary/40 hover:border-primary/20 hover:-translate-y-1 hover:shadow-lg hover:shadow-primary/5'
   );
 
-  const className = cn(
-    'flex w-full items-center gap-4 rounded-2xl border border-border bg-background/80 px-4 py-4 transition-all',
-    'hover:-translate-y-0.5 hover:border-primary/30 hover:bg-primary/5 hover:shadow-lg hover:shadow-primary/10',
+  const content = (
+    <>
+      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-background shadow-sm ring-1 ring-border/50 group-hover:scale-110 group-hover:ring-primary/20 transition-all duration-300">
+        <Icon size={20} className="text-foreground/80 group-hover:text-primary transition-colors" />
+      </div>
+      <div className="flex items-center gap-1.5">
+        <span className="text-xs font-bold text-muted-foreground group-hover:text-foreground transition-colors">{label}</span>
+        <ExternalLink size={10} className="opacity-0 -translate-x-1 group-hover:opacity-40 group-hover:translate-x-0 transition-all" />
+      </div>
+    </>
   );
 
   if (onOpenLink) {
@@ -107,82 +92,62 @@ const LinkAction: React.FC<LinkActionProps> = ({ href, label, subtitle, icon: Ic
   );
 };
 
-const ReleaseCard: React.FC<ReleaseCardProps> = ({
-  info,
-  title,
-  currentChannel,
-  onOpenLink,
-  downloadLabel,
-  releasePageLabel,
-  latestVersionLabel,
-  publishedAtLabel,
-  currentChannelLabel,
-  updateAvailableLabel,
-  upToDateLabel,
-}) => {
-  const isCurrentChannel = info.channel === currentChannel;
-  const accentClass = info.channel === 'prerelease'
-    ? 'border-fuchsia-400/20 bg-fuchsia-500/8 text-fuchsia-200'
-    : 'border-cyan-400/20 bg-cyan-500/8 text-cyan-200';
-  const stateClass = info.has_update
-    ? 'border-amber-400/20 bg-amber-500/10 text-amber-100'
-    : 'border-emerald-400/20 bg-emerald-500/10 text-emerald-100';
+const ReleaseRow: React.FC<{
+  info: AboutReleaseChannelInfo;
+  title: string;
+  onOpenLink?: (url: string) => void;
+  t: any;
+}> = ({ info, title, onOpenLink, t }) => {
   const downloadUrl = info.target_download_url || info.release_page_url;
-
+  
   return (
-    <div className="rounded-[1.6rem] border border-white/10 bg-black/20 p-4 sm:p-5">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="min-w-0">
-          <div className="text-sm font-black uppercase tracking-[0.18em] text-slate-400">{title}</div>
-          <div className="mt-2 flex flex-wrap items-center gap-2">
-            <span className={cn('rounded-full border px-3 py-1 text-xs font-black uppercase tracking-[0.18em]', accentClass)}>
-              {info.channel}
+    <div className="group relative overflow-hidden rounded-xl border border-border/50 bg-secondary/10 p-4 transition-all hover:bg-secondary/20">
+      <div className="flex items-start justify-between gap-4">
+        <div className="min-w-0 flex-1 space-y-1.5">
+          <div className="flex items-center gap-2">
+            <span className={cn(
+              "text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-md border",
+              info.channel === 'prerelease' 
+                ? "border-fuchsia-500/30 text-fuchsia-600 dark:text-fuchsia-400 bg-fuchsia-500/5" 
+                : "border-primary/30 text-primary bg-primary/5"
+            )}>
+              {title}
             </span>
-            {isCurrentChannel && (
-              <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-black uppercase tracking-[0.18em] text-slate-200">
-                {currentChannelLabel}
+            {info.has_update && (
+              <span className="flex items-center gap-1 text-[10px] font-bold text-amber-500 animate-pulse">
+                <Sparkles size={10} /> {t('about.state.updateAvailable')}
               </span>
             )}
           </div>
+          <div className="font-mono text-sm font-bold text-foreground tracking-tight">{info.version}</div>
+          {info.published_at && (
+            <div className="flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground/70">
+              <Calendar size={12} />
+              {info.published_at}
+            </div>
+          )}
         </div>
 
-        <div className={cn('rounded-2xl border px-3 py-2 text-xs font-black uppercase tracking-[0.18em]', stateClass)}>
-          {info.has_update ? updateAvailableLabel : upToDateLabel}
+        <div className="flex flex-col gap-2">
+          <Button
+            size="sm"
+            variant="default"
+            className="h-8 w-8 rounded-lg p-0 shadow-sm"
+            onClick={() => onOpenLink ? onOpenLink(downloadUrl) : window.open(downloadUrl, '_blank')}
+            title={t('about.downloadChannel')}
+          >
+            <Download size={14} />
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-8 w-8 rounded-lg p-0 bg-transparent"
+            onClick={() => onOpenLink ? onOpenLink(info.release_page_url) : window.open(info.release_page_url, '_blank')}
+            title={t('about.viewReleasePage')}
+          >
+            <ExternalLink size={14} />
+          </Button>
         </div>
-      </div>
-
-      <div className="mt-4 rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-4">
-        <div className="text-xs font-black uppercase tracking-[0.18em] text-slate-500">{latestVersionLabel}</div>
-        <div className="mt-2 break-all font-mono text-sm font-bold leading-6 text-white sm:text-base">
-          {info.version}
-        </div>
-      </div>
-
-      {info.published_at && (
-        <div className="mt-3 flex items-center gap-2 text-sm font-semibold text-slate-300/90">
-          <Calendar size={14} className="shrink-0 text-slate-400" />
-          <span className="break-all">{publishedAtLabel}: {info.published_at}</span>
-        </div>
-      )}
-
-      <div className="mt-4 flex flex-wrap gap-2">
-        <Button
-          type="button"
-          onClick={() => onOpenLink ? onOpenLink(downloadUrl) : window.open(downloadUrl, '_blank', 'noopener,noreferrer')}
-          className="h-10 gap-2 px-4 text-sm"
-        >
-          <Download size={15} />
-          {downloadLabel}
-        </Button>
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => onOpenLink ? onOpenLink(info.release_page_url) : window.open(info.release_page_url, '_blank', 'noopener,noreferrer')}
-          className="h-10 gap-2 border-white/15 bg-white/5 px-4 text-sm text-white hover:bg-white/10"
-        >
-          <ExternalLink size={15} />
-          {releasePageLabel}
-        </Button>
       </div>
     </div>
   );
@@ -203,219 +168,140 @@ export const AboutModal: React.FC<AboutModalProps> = ({
   const { t } = useTranslation();
 
   useEffect(() => {
-    if (!isOpen) {
-      return undefined;
-    }
-
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        onClose();
-      }
-    };
-
+    if (!isOpen) return;
+    const onKeyDown = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [isOpen, onClose]);
 
-  if (!isOpen) {
-    return null;
-  }
+  if (!isOpen) return null;
 
   const currentVersionText = currentVersion || '—';
-  const currentChannelText = updateInfo?.current_channel || 'stable';
-  const currentChannelLabel = currentChannelText === 'prerelease'
-    ? t('about.channels.prerelease')
-    : t('about.channels.stable');
-  const hasChannelData = Boolean(updateInfo?.stable || updateInfo?.prerelease);
+  const currentChannel = updateInfo?.current_channel || 'stable';
 
   return (
     <div
-      className="fixed inset-0 flex items-center justify-center p-3 sm:p-4"
+      className="fixed inset-0 flex items-center justify-center p-4 sm:p-6"
       role="dialog"
       aria-modal="true"
-      aria-labelledby="fileuni-about-modal-title"
       style={{ zIndex }}
     >
-      <div className="absolute inset-0 bg-black/72 backdrop-blur-sm" onClick={onClose} />
+      {/* Background Overlay: Maximum isolation */}
+      <div className="absolute inset-0 bg-black/95 backdrop-blur-2xl transition-opacity" onClick={onClose} />
 
-      <div className="relative flex max-h-[92vh] w-full max-w-3xl flex-col overflow-hidden rounded-[2rem] border border-white/10 bg-slate-950 text-slate-100 shadow-2xl">
-        <div className="border-b border-white/10 bg-gradient-to-r from-primary/18 via-cyan-500/8 to-transparent px-5 py-5 sm:px-6">
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex min-w-0 items-start gap-4">
-              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-3xl border border-white/10 bg-white/8 shadow-inner">
-                <Info size={24} className="text-primary" />
-              </div>
-              <div className="min-w-0">
-                <h2 id="fileuni-about-modal-title" className="text-xl font-black tracking-tight sm:text-2xl">
-                  {t('about.title')}
-                </h2>
-                <p className="mt-1 text-sm font-bold leading-6 text-slate-300/80 sm:text-base">
-                  {t('about.subtitle')}
-                </p>
-              </div>
-            </div>
-            <button
-              type="button"
-              onClick={onClose}
-              className="rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-sm font-black uppercase tracking-wide text-slate-300 transition-colors hover:bg-white/10 hover:text-white"
-            >
-              {t('common.close')}
-            </button>
+      {/* Main Container: Solid Opaque Background */}
+      <div className="relative flex w-full max-w-[480px] flex-col overflow-hidden rounded-2xl border border-border bg-background shadow-[0_0_50px_-12px_rgba(0,0,0,0.5)] ring-1 ring-white/10 animate-in fade-in zoom-in-95 duration-200">
+        
+        {/* Modern Header: Solid, no transparency */}
+        <div className="relative flex flex-col items-center px-6 pt-12 pb-8 text-center bg-background border-b border-border/50">
+           <button
+            onClick={onClose}
+            className="absolute right-4 top-4 rounded-full p-2 text-muted-foreground/50 hover:bg-secondary hover:text-foreground transition-all"
+          >
+            <X size={20} />
+          </button>
+
+          <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary shadow-lg shadow-primary/20 ring-4 ring-background">
+            <Info size={32} className="text-primary-foreground" />
           </div>
+          
+          <h2 className="text-2xl font-black tracking-tight text-foreground">FileUni</h2>
+          
+          <div className="mt-3 flex items-center gap-2 rounded-full border border-border bg-secondary px-4 py-1">
+            <span className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">Version</span>
+            <span className="text-xs font-mono font-bold text-foreground">{currentVersionText}</span>
+          </div>
+
+          <p className="mt-5 max-w-[320px] text-sm font-medium leading-relaxed text-muted-foreground/80">
+            {t('about.subtitle')}
+          </p>
         </div>
 
-        <div className="flex-1 space-y-6 overflow-y-auto px-5 py-5 sm:px-6 sm:py-6">
-          <div className="grid gap-4 lg:grid-cols-[0.8fr_1.2fr]">
-            <div className="rounded-[1.75rem] border border-white/10 bg-white/[0.03] p-5 shadow-inner">
-              <div className="flex flex-wrap items-center gap-3">
-                <span className="rounded-full border border-emerald-400/30 bg-emerald-500/12 px-3 py-1 text-sm font-black uppercase tracking-[0.18em] text-emerald-300">
-                  FileUni
-                </span>
-              </div>
-              <div className="mt-5 text-sm font-bold uppercase tracking-[0.2em] text-slate-500">
-                {t('about.title')}
-              </div>
-              <div className="mt-2 text-sm leading-6 text-slate-300/75">
-                {t('about.subtitle')}
-              </div>
-            </div>
-
-            <div className="rounded-[1.75rem] border border-white/10 bg-black/25 p-5">
-              <div className="grid gap-4 sm:grid-cols-[220px_1fr] sm:items-start">
-                <div>
-                  <div className="text-sm font-black uppercase tracking-[0.2em] text-slate-400">
-                    {t('about.currentChannel')}
-                  </div>
-                  <div className="mt-3 inline-flex rounded-full border border-cyan-400/30 bg-cyan-500/12 px-3 py-1 text-sm font-black uppercase tracking-[0.18em] text-cyan-300">
-                    {currentChannelLabel}
-                  </div>
-                </div>
-                <div>
-                  <div className="text-sm font-black uppercase tracking-[0.2em] text-slate-400">
-                    {t('about.currentVersion')}
-                  </div>
-                  <div className="mt-3 break-all rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-4 font-mono text-base font-black leading-7 text-white sm:text-xl">
-                    {currentVersionText}
-                  </div>
-                </div>
-              </div>
-            </div>
+        <div className="flex-1 space-y-8 px-8 pb-8 bg-background pt-8">
+          {/* Links Grid: Solid Cards */}
+          <div className="grid grid-cols-3 gap-3">
+            <LinkCard href={PROJECT_HOMEPAGE_URL} label={t('about.links.website')} icon={Globe} onOpenLink={onOpenLink} />
+            <LinkCard href={PROJECT_DOCS_URL} label={t('about.links.docs')} icon={BookOpen} onOpenLink={onOpenLink} />
+            <LinkCard href={PROJECT_REPOSITORY_URL} label="GitHub" icon={Github} onOpenLink={onOpenLink} />
           </div>
 
-          <div className="grid gap-3 md:grid-cols-3">
-            <LinkAction href={PROJECT_HOMEPAGE_URL} label={t('about.links.website')} subtitle="fileuni.com" icon={Globe} onOpenLink={onOpenLink} />
-            <LinkAction href={PROJECT_DOCS_URL} label={t('about.links.docs')} subtitle="docs.fileuni.com" icon={BookOpen} onOpenLink={onOpenLink} />
-            <LinkAction
-              href={PROJECT_REPOSITORY_URL}
-              label={t('about.links.repository')}
-              subtitle="github.com/FileUni/FileUni-Project"
-              icon={GitBranch}
-              onOpenLink={onOpenLink}
-            />
-          </div>
-
+          {/* Update Section */}
           {showCheckUpdates && (
-            <div className="rounded-[1.75rem] border border-white/10 bg-white/[0.03] p-5 shadow-inner">
-              <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-sm font-black uppercase tracking-[0.2em] text-slate-400">
-                    <Sparkles size={16} className="text-primary" />
-                    {t('about.updateSectionTitle')}
-                  </div>
-                  <p className="text-sm leading-6 text-slate-300/85">{t('about.updateSectionDescription')}</p>
+            <div className="space-y-4">
+              <div className="h-px w-full bg-border/50" />
+              
+              {/* Header / Action Bar: Opaque */}
+              <div className="flex items-center justify-between rounded-xl border border-border/60 bg-secondary p-1.5 pl-4 shadow-sm">
+                <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                  <Sparkles size={14} className="text-primary" />
+                  {t('about.updateSectionTitle')}
                 </div>
                 {onCheckUpdates && (
-                  <Button type="button" onClick={() => void onCheckUpdates()} disabled={isCheckingUpdates} className="h-11 gap-2 px-5 text-sm">
-                    {isCheckingUpdates ? <Loader2 size={16} className="animate-spin" /> : <RefreshCcw size={16} />}
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    onClick={() => void onCheckUpdates()}
+                    disabled={isCheckingUpdates}
+                    className="h-8 gap-2 rounded-lg text-[11px] font-black uppercase tracking-wider shadow-sm border border-border/50"
+                  >
+                    {isCheckingUpdates ? <Loader2 size={12} className="animate-spin" /> : <RefreshCcw size={12} />}
                     {isCheckingUpdates ? t('about.checking') : t('about.checkUpdates')}
                   </Button>
                 )}
               </div>
 
-              <div className="mt-5 grid gap-4 lg:grid-cols-[1fr_auto]">
-                <div className="space-y-3">
-                  {updateError ? (
-                    <div className="rounded-2xl border border-red-500/25 bg-red-500/10 px-4 py-4 text-sm text-red-200">
-                      <div className="flex items-start gap-3">
-                        <TriangleAlert size={18} className="mt-0.5 shrink-0" />
-                        <div>
-                          <div className="font-black uppercase tracking-wide">{t('about.updateError')}</div>
-                          <div className="mt-1 font-semibold text-red-200/90">{updateError}</div>
-                        </div>
-                      </div>
-                    </div>
-                  ) : updateInfo ? (
-                    <div className={cn(
-                      'rounded-2xl border px-4 py-4 text-sm',
-                      updateInfo.has_update
-                        ? 'border-amber-400/25 bg-amber-500/10 text-amber-100'
-                        : 'border-emerald-400/25 bg-emerald-500/10 text-emerald-100'
-                    )}>
-                      <div className="flex items-start gap-3">
-                        {updateInfo.has_update ? (
-                          <Download size={18} className="mt-0.5 shrink-0 text-amber-300" />
-                        ) : (
-                          <CheckCircle2 size={18} className="mt-0.5 shrink-0 text-emerald-300" />
-                        )}
-                        <div className="min-w-0">
-                          <div className="font-black uppercase tracking-wide">
-                            {updateInfo.has_update
-                              ? t('about.updateAvailableForCurrentChannel', { channel: currentChannelLabel })
-                              : t('about.upToDateForCurrentChannel', { channel: currentChannelLabel })}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="rounded-2xl border border-white/10 bg-black/20 px-4 py-4 text-sm font-semibold text-slate-400">
-                      {t('about.updateIdle')}
-                    </div>
-                  )}
+              {/* Status Display: Solid background */}
+              {updateError ? (
+                <div className="rounded-xl border border-destructive/30 bg-destructive/10 p-5 text-center shadow-inner">
+                  <div className="text-[10px] font-black text-destructive uppercase tracking-widest">{t('about.updateError')}</div>
+                  <div className="mt-2 text-xs font-bold text-destructive/80">{updateError}</div>
                 </div>
+              ) : updateInfo ? (
+                <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                  <div className={cn(
+                    'flex items-center justify-center gap-2.5 py-2 text-[11px] font-black uppercase tracking-[0.2em]',
+                    updateInfo.has_update ? 'text-amber-500' : 'text-emerald-500'
+                  )}>
+                    {updateInfo.has_update ? <Download size={16} className="animate-bounce" /> : <CheckCircle2 size={16} />}
+                    <span>
+                      {updateInfo.has_update
+                        ? t('about.updateAvailableForCurrentChannel', { channel: t(`about.channels.${currentChannel}`) })
+                        : t('about.upToDateForCurrentChannel', { channel: t(`about.channels.${currentChannel}`) })}
+                    </span>
+                  </div>
 
-                {hasChannelData && (
-                    <div className="lg:w-56" />
-                )}
-              </div>
-
-              {hasChannelData && (
-                <div className="mt-5 grid gap-4 xl:grid-cols-2">
-                  {updateInfo?.stable && (
-                    <ReleaseCard
-                      info={updateInfo.stable}
-                      title={t('about.channels.stable')}
-                      currentChannel={currentChannelText}
-                      onOpenLink={onOpenLink}
-                      downloadLabel={t('about.downloadChannel')}
-                      releasePageLabel={t('about.viewReleasePage')}
-                      latestVersionLabel={t('about.latestVersion')}
-                      publishedAtLabel={t('about.publishedAt')}
-                      currentChannelLabel={t('about.currentChannelBadge')}
-                      updateAvailableLabel={t('about.state.updateAvailable')}
-                      upToDateLabel={t('about.state.upToDate')}
-                    />
-                  )}
-                  {updateInfo?.prerelease && (
-                    <ReleaseCard
-                      info={updateInfo.prerelease}
-                      title={t('about.channels.prerelease')}
-                      currentChannel={currentChannelText}
-                      onOpenLink={onOpenLink}
-                      downloadLabel={t('about.downloadChannel')}
-                      releasePageLabel={t('about.viewReleasePage')}
-                      latestVersionLabel={t('about.latestVersion')}
-                      publishedAtLabel={t('about.publishedAt')}
-                      currentChannelLabel={t('about.currentChannelBadge')}
-                      updateAvailableLabel={t('about.state.updateAvailable')}
-                      upToDateLabel={t('about.state.upToDate')}
-                    />
-                  )}
+                  <div className="grid gap-2.5">
+                    {updateInfo.stable && (
+                      <ReleaseRow 
+                        info={updateInfo.stable} 
+                        title={t('about.channels.stable')} 
+                        onOpenLink={onOpenLink}
+                        t={t}
+                      />
+                    )}
+                    {updateInfo.prerelease && (
+                      <ReleaseRow 
+                        info={updateInfo.prerelease} 
+                        title={t('about.channels.prerelease')} 
+                        onOpenLink={onOpenLink}
+                        t={t}
+                      />
+                    )}
+                  </div>
                 </div>
-              )}
+              ) : null}
             </div>
           )}
+        </div>
+
+        {/* Minimal Footer: Solid and centered */}
+        <div className="flex items-center justify-between border-t border-border/50 bg-secondary px-8 py-5 text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground/40">
+           <span>FileUni Project</span>
+           <span className="opacity-50">© {new Date().getFullYear()}</span>
         </div>
       </div>
     </div>
   );
 };
+
+
