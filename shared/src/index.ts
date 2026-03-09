@@ -1,6 +1,7 @@
 export * from './components/ConfigPathSelector';
 
 export * from './components/AdminPasswordPanel';
+export * from './components/AboutModal';
 export * from './components/ConfigRawEditor';
 export * from './components/ConfigEditorPanel';
 export * from './components/ConfigQuickWizardModal';

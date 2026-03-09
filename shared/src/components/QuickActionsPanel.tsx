@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { FileCode, FolderOpen, Globe, Info, RefreshCcw, Rocket, Settings } from 'lucide-react';
+import { BookOpen, FileCode, FolderOpen, Globe, Info, RefreshCcw, Rocket, Settings } from 'lucide-react';
 
 interface QuickActionsPanelProps {
   title: string;
@@ -8,11 +8,13 @@ interface QuickActionsPanelProps {
   openConfigDirLabel: string;
   editConfigLabel: string;
   helpLabel: string;
+  aboutLabel?: string;
   setupWizardLabel?: string;
   setupLoading?: boolean;
   onOpenWebUi: () => void;
   onOpenConfigDir: () => void;
   onEditConfig: () => void;
+  onOpenAbout?: () => void;
   onStartSetupWizard?: () => void;
   onResetAdminPassword?: () => void;
   resetAdminPasswordLabel?: string;
@@ -27,11 +29,13 @@ export const QuickActionsPanel: React.FC<QuickActionsPanelProps> = ({
   openConfigDirLabel,
   editConfigLabel,
   helpLabel,
+  aboutLabel,
   setupWizardLabel,
   setupLoading = false,
   onOpenWebUi,
   onOpenConfigDir,
   onEditConfig,
+  onOpenAbout,
   onStartSetupWizard,
   onResetAdminPassword,
   resetAdminPasswordLabel,
@@ -126,10 +130,22 @@ export const QuickActionsPanel: React.FC<QuickActionsPanelProps> = ({
           className="flex items-center gap-3 p-3 rounded-xl bg-white dark:bg-slate-800/50 hover:bg-amber-500 dark:hover:bg-amber-600 hover:text-white text-slate-600 dark:text-slate-300 transition-all duration-300 group shadow-sm hover:shadow-amber-500/25 border border-slate-200/50 dark:border-slate-700/50"
         >
           <div className="w-9 h-9 rounded-lg bg-amber-500/10 group-hover:bg-white/20 flex items-center justify-center transition-colors">
-            <Info size={18} className="group-hover:scale-110 transition-transform duration-300" />
+            <BookOpen size={18} className="group-hover:scale-110 transition-transform duration-300" />
           </div>
           <span className="text-sm font-bold tracking-tight">{helpLabel}</span>
         </a>
+
+        {onOpenAbout && aboutLabel && (
+          <button
+            onClick={onOpenAbout}
+            className="flex items-center gap-3 p-3 rounded-xl bg-white dark:bg-slate-800/50 hover:bg-fuchsia-500 dark:hover:bg-fuchsia-600 hover:text-white text-slate-600 dark:text-slate-300 transition-all duration-300 group shadow-sm hover:shadow-fuchsia-500/25 border border-slate-200/50 dark:border-slate-700/50"
+          >
+            <div className="w-9 h-9 rounded-lg bg-fuchsia-500/10 group-hover:bg-white/20 flex items-center justify-center transition-colors">
+              <Info size={18} className="group-hover:scale-110 transition-transform duration-300" />
+            </div>
+            <span className="text-sm font-bold tracking-tight">{aboutLabel}</span>
+          </button>
+        )}
 
         {showSetupWizardAction && onStartSetupWizard && setupWizardLabel && (
           <div className="mt-2 pt-4 border-t border-slate-200/50 dark:border-slate-800/50">

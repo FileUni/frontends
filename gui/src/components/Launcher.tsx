@@ -10,8 +10,11 @@ import {
   Cpu,
   Zap,
   FileText,
+  Info,
 } from 'lucide-react';
 import { useThemeStore, type Theme, useLanguageStore, type Language,
+  AboutModal,
+  type AboutUpdateInfo,
   type LogEntry,
   ToastContainer,
   toast,
@@ -124,6 +127,10 @@ export default function Launcher() {
   const [configFilePath, setConfigFilePath] = useState('');
   const [runtimeDirPresets, setRuntimeDirPresets] = useState<RuntimeDirPresets | null>(null);
   const [missingConfigPrompt, setMissingConfigPrompt] = useState<MissingConfigPromptState | null>(null);
+  const [isAboutOpen, setIsAboutOpen] = useState(false);
+  const [aboutUpdateInfo, setAboutUpdateInfo] = useState<AboutUpdateInfo | null>(null);
+  const [aboutUpdateError, setAboutUpdateError] = useState<string | null>(null);
+  const [isCheckingAboutUpdates, setIsCheckingAboutUpdates] = useState(false);
   const displayedConfigDir = configDir ?? runtimeDirPresets?.default_config_dir ?? '...';
   const displayedAppDataDir = appDataDir ?? runtimeDirPresets?.default_app_data_dir ?? '...';
   const missingConfigPromptResolver = useRef<((accepted: boolean) => void) | null>(null);
@@ -556,6 +563,34 @@ export default function Launcher() {
     }
   };
 
+  const handleOpenExternalLink = async (url: string) => {
+    if (!isTauriRuntime()) {
+      window.open(url, '_blank', 'noopener,noreferrer');
+      return;
+    }
+
+    try {
+      await safeInvoke<void>('open_external_url', { url });
+    } catch (e: unknown) {
+      toast.error(extractErrorMessage(e));
+    }
+  };
+
+  const handleCheckAboutUpdates = async () => {
+    setIsCheckingAboutUpdates(true);
+    setAboutUpdateError(null);
+    try {
+      const payload = await safeInvoke<AboutUpdateInfo>('check_latest_release');
+      setAboutUpdateInfo(payload);
+    } catch (e: unknown) {
+      const message = extractErrorMessage(e);
+      setAboutUpdateError(message);
+      toast.error(message);
+    } finally {
+      setIsCheckingAboutUpdates(false);
+    }
+  };
+
   const handleResetAdminPassword = async (password: string): Promise<string> => {
     setLoading(true);
     try {
@@ -665,6 +700,13 @@ export default function Launcher() {
             >
               {theme === 'light' ? <Sun size={20} /> : theme === 'dark' ? <Moon size={20} /> : <Monitor size={20} />}
             </button>
+            <button
+              onClick={() => setIsAboutOpen(true)}
+              className="p-3 rounded-2xl bg-slate-100/80 dark:bg-slate-800/50 hover:bg-white dark:hover:bg-slate-700 text-slate-600 dark:text-slate-400 transition-all border border-slate-200/50 dark:border-slate-700/50 hover:shadow-lg hover:scale-105 active:scale-95"
+              title={t('about.open')}
+            >
+              <Info size={20} />
+            </button>
           </div>
         </div>
 
@@ -753,10 +795,12 @@ export default function Launcher() {
                       openConfigDirLabel={t('launcher.open_config_dir')}
                       editConfigLabel={t('launcher.edit_config')}
                       helpLabel={t('launcher.help')}
+                      aboutLabel={t('about.open')}
                       resetAdminPasswordLabel={t('launcher.reset_admin_password')}
                       onOpenWebUi={handleOpenWebUI}
                       onOpenConfigDir={handleOpenConfig}
                       onEditConfig={handleEditConfig}
+                      onOpenAbout={() => setIsAboutOpen(true)}
                       onResetAdminPassword={() => setIsResettingAdminPassword(true)}
                       showSetupWizardAction={false}
                     />
@@ -849,6 +893,20 @@ export default function Launcher() {
         showWarning={false}
         showRandomGenerator={true}
         minPasswordLength={6}
+      />
+
+      <AboutModal
+        isOpen={isAboutOpen}
+        onClose={() => setIsAboutOpen(false)}
+        currentVersion={version}
+        showCheckUpdates={true}
+        isCheckingUpdates={isCheckingAboutUpdates}
+        updateInfo={aboutUpdateInfo}
+        updateError={aboutUpdateError}
+        onCheckUpdates={handleCheckAboutUpdates}
+        onOpenLink={(url) => {
+          void handleOpenExternalLink(url);
+        }}
       />
 
       {isEditingConfig && (

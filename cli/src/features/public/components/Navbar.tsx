@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useEffect } from 'react';
-import { useThemeStore, type Theme } from '@fileuni/shared';
+import { AboutModal, type AboutUpdateInfo, useThemeStore, type Theme } from '@fileuni/shared';
 import { useLanguageStore, type Language } from '@fileuni/shared';
 import { useAuthStore } from '@/stores/auth.ts';
 import { useAuthzStore } from '@/stores/authz.ts';
@@ -11,11 +11,12 @@ import { storageHub } from '@fileuni/shared';
 import { 
   Sun, Moon, Laptop, LayoutDashboard, FolderOpen, 
   ShieldAlert, LogIn, UserPlus, Home, Menu, X, LogOut,
-  Users, MessageSquare
+  Users, MessageSquare, Info
 } from 'lucide-react';
 import { cn } from '@/lib/utils.ts';
 import { StatusIndicator } from './StatusIndicator.tsx';
 import { useChat } from '@/hooks/ChatContext.tsx';
+import { checkLatestReleaseApi, fetchRuntimeVersionApi } from './about/api.ts';
 
 
 export const Navbar = () => {
@@ -37,6 +38,11 @@ export const Navbar = () => {
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [isAboutOpen, setIsAboutOpen] = useState(false);
+  const [aboutVersion, setAboutVersion] = useState('');
+  const [aboutUpdateInfo, setAboutUpdateInfo] = useState<AboutUpdateInfo | null>(null);
+  const [aboutUpdateError, setAboutUpdateError] = useState<string | null>(null);
+  const [isCheckingAboutUpdates, setIsCheckingAboutUpdates] = useState(false);
 
   const { params } = useNavigationStore();
   const base = '#';
@@ -46,6 +52,21 @@ export const Navbar = () => {
     fetchCapabilities();
     const savedLang = storageHub.getLocalItem('fileuni-language-raw') || 'zh';
     i18next.changeLanguage(savedLang);
+    void fetchRuntimeVersionApi()
+      .then((payload) => setAboutVersion(payload.version))
+      .catch((error) => {
+        console.error('Failed to fetch runtime version', error);
+      });
+  }, []);
+
+  useEffect(() => {
+    const handleOpenAboutEvent = () => {
+      setIsAboutOpen(true);
+      setAboutUpdateError(null);
+    };
+
+    window.addEventListener('fileuni:open-about', handleOpenAboutEvent);
+    return () => window.removeEventListener('fileuni:open-about', handleOpenAboutEvent);
   }, []);
 
   const mod = params.mod || 'public';
@@ -101,6 +122,26 @@ export const Navbar = () => {
     window.location.hash = `mod=public&page=login`;
   };
 
+  const handleOpenAbout = () => {
+    setIsMenuOpen(false);
+    setIsAboutOpen(true);
+    setAboutUpdateError(null);
+  };
+
+  const handleCheckAboutUpdates = async () => {
+    setIsCheckingAboutUpdates(true);
+    setAboutUpdateError(null);
+    try {
+      const payload = await checkLatestReleaseApi();
+      setAboutUpdateInfo(payload);
+    } catch (error) {
+      console.error('Failed to check latest release', error);
+      setAboutUpdateError(error instanceof Error ? error.message : String(error));
+    } finally {
+      setIsCheckingAboutUpdates(false);
+    }
+  };
+
   return (
     <>
       <nav className={cn(
@@ -137,6 +178,17 @@ export const Navbar = () => {
           </button>
         </div>
       </nav>
+
+      <AboutModal
+        isOpen={isAboutOpen}
+        onClose={() => setIsAboutOpen(false)}
+        currentVersion={aboutVersion}
+        showCheckUpdates={canAccessAdmin}
+        isCheckingUpdates={isCheckingAboutUpdates}
+        updateInfo={aboutUpdateInfo}
+        updateError={aboutUpdateError}
+        onCheckUpdates={canAccessAdmin ? handleCheckAboutUpdates : undefined}
+      />
 
       {/* Unified Dropdown Menu */}
       {isMenuOpen && (
@@ -215,6 +267,20 @@ export const Navbar = () => {
 
               {/* System Actions */}
               <div className="space-y-6">
+                <div>
+                  <p className={cn("text-sm font-black uppercase tracking-[0.2em] opacity-30 mb-4 px-2")}>{t('about.open')}</p>
+                  <button
+                    onClick={handleOpenAbout}
+                    className={cn(
+                      'w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl text-sm font-black transition-all text-left',
+                      isDark ? 'hover:bg-white/5 opacity-70 hover:opacity-100' : 'hover:bg-gray-100 opacity-70 hover:opacity-100'
+                    )}
+                  >
+                    <Info size={18} />
+                    {t('about.open')}
+                  </button>
+                </div>
+
                 <div>
                   <p className={cn("text-sm font-black uppercase tracking-[0.2em] opacity-30 mb-4 px-2")}>{t('common.language')}</p>
                   <div className="grid grid-cols-3 gap-2 p-1">

@@ -151,6 +151,13 @@ export const DashboardLayout: React.FC<{
       <div className={cn("mt-auto pt-4 border-t flex flex-wrap gap-x-4 gap-y-2 px-2 pb-2", isDark ? "border-white/5" : "border-gray-200")}>
         <a href="#mod=public&page=tos" className="text-sm font-black uppercase tracking-widest opacity-20 hover:opacity-100 hover:text-primary transition-all">{t("pages.tos.title")}</a>
         <a href="#mod=public&page=privacy" className="text-sm font-black uppercase tracking-widest opacity-20 hover:opacity-100 hover:text-primary transition-all">{t("pages.privacy.title")}</a>
+        <button
+          type="button"
+          onClick={() => window.dispatchEvent(new Event('fileuni:open-about'))}
+          className="text-sm font-black uppercase tracking-widest opacity-20 hover:opacity-100 hover:text-primary transition-all"
+        >
+          {t('about.open')}
+        </button>
       </div>
     </div>
   );

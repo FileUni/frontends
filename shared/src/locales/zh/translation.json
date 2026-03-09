@@ -40,6 +40,44 @@
       "content": "FileUni 按\"原样\"提供。虽然我们致力于 99.9% 的正常运行时间，但我们建议为关键数据维护外部备份。"
     }
   },
+  "about": {
+    "open": "关于 FileUni",
+    "title": "关于 FileUni",
+    "subtitle": "查看当前版本、官方入口与最新版本信息。",
+    "description": "FileUni 是一个面向多端与多协议场景的统一文件平台，聚合 Web UI、桌面 GUI 与服务端能力，帮助你用更少的切换成本管理存储、账户、服务与扩展。",
+    "currentVersion": "当前版本",
+    "currentChannel": "当前通道",
+    "latestVersion": "最新版本",
+    "channel": "更新通道",
+    "publishedAt": "发布时间",
+    "updateSectionTitle": "版本更新",
+    "updateSectionDescription": "检查当前实例对应平台的最新可用版本，并在有更新时提供直达下载入口。",
+    "checkUpdates": "检查更新",
+    "checking": "正在检查...",
+    "upToDate": "当前已是最新版本",
+    "updateAvailable": "发现新版本 {{version}}",
+    "upToDateForCurrentChannel": "当前通道（{{channel}}）已是最新版本",
+    "updateAvailableForCurrentChannel": "当前通道（{{channel}}）发现可更新版本",
+    "updateError": "检查更新失败",
+    "updateIdle": "尚未执行更新检查。",
+    "downloadLatest": "下载最新版本",
+    "downloadChannel": "下载该通道版本",
+    "viewReleasePage": "查看发布页面",
+    "currentChannelBadge": "当前通道",
+    "channels": {
+      "stable": "正式版",
+      "prerelease": "预发布版"
+    },
+    "state": {
+      "updateAvailable": "可更新",
+      "upToDate": "已最新"
+    },
+    "links": {
+      "website": "项目主页",
+      "docs": "项目文档",
+      "repository": "主仓库地址"
+    }
+  },
   "filemanager": {
     "allFiles": "所有文件",
     "favorites": "我的收藏",

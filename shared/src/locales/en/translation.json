@@ -40,6 +40,44 @@
       "content": "FileUni is provided \"as is\". While we aim for 99.9% uptime, we recommend maintaining external backups for critical data."
     }
   },
+  "about": {
+    "open": "About FileUni",
+    "title": "About FileUni",
+    "subtitle": "View the current version, official resources, and the latest release status.",
+    "description": "FileUni is a unified file platform for multi-protocol and multi-surface workflows. It brings together the Web UI, desktop GUI, and backend service capabilities so storage, accounts, services, and extensions stay in one operational workspace.",
+    "currentVersion": "Current Version",
+    "currentChannel": "Current Channel",
+    "latestVersion": "Latest Version",
+    "channel": "Channel",
+    "publishedAt": "Published At",
+    "updateSectionTitle": "Updates",
+    "updateSectionDescription": "Check the latest release for the current runtime target and jump directly to the best download when an update is available.",
+    "checkUpdates": "Check for Updates",
+    "checking": "Checking...",
+    "upToDate": "This instance is already up to date",
+    "updateAvailable": "Update available: {{version}}",
+    "upToDateForCurrentChannel": "The current channel ({{channel}}) is already up to date",
+    "updateAvailableForCurrentChannel": "An update is available for the current channel ({{channel}})",
+    "updateError": "Update check failed",
+    "updateIdle": "No update check has been performed yet.",
+    "downloadLatest": "Download Latest",
+    "downloadChannel": "Download This Channel",
+    "viewReleasePage": "View Release Page",
+    "currentChannelBadge": "Current Channel",
+    "channels": {
+      "stable": "Stable",
+      "prerelease": "Prerelease"
+    },
+    "state": {
+      "updateAvailable": "Update Available",
+      "upToDate": "Up to Date"
+    },
+    "links": {
+      "website": "Project Homepage",
+      "docs": "Documentation",
+      "repository": "Repository"
+    }
+  },
   "filemanager": {
     "allFiles": "All Files",
     "favorites": "Favorites",
