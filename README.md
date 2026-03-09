@@ -10,6 +10,12 @@ Bun + Astro 5 + React 19 + Tailwind CSS 4 + shadcn/ui frontend modules.
 | `gui/` | Tauri GUI Launcher, runs in Tauri WebView |
 | `shared/` | Common components, stores, utilities for both cli and gui |
 
+## Key Files
+
+| File | Description |
+|------|-------------|
+| `cli/openapi.json` | Project API definition (OpenAPI spec). Critical for frontend integration. Run `bun run gen-api` to generate TypeScript types from this file. |
+
 ## Key Constraints
 
 - **Runtime**: Bun only; Node.js not supported
