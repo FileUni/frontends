@@ -113,7 +113,7 @@ export const SystemConfigWorkbench: React.FC<SystemConfigWorkbenchProps> = ({
       "flex flex-col rounded-2xl sm:rounded-[2.5rem] border p-3 sm:p-6 shadow-xl transition-all overflow-hidden",
       isDark 
         ? "bg-white/[0.02] border-white/5 shadow-black/40 hover:border-white/10" 
-        : "bg-white border-slate-200 shadow-slate-200/50 hover:border-slate-300"
+        : "bg-white border-slate-300 shadow-slate-200/50 hover:border-slate-400"
     )}>
       {validationErrors.length > 0 && (
         <div className={cn(
@@ -190,7 +190,7 @@ export const SystemConfigWorkbench: React.FC<SystemConfigWorkbenchProps> = ({
 
       <div className={cn(
         "mb-3 sm:mb-4 rounded-xl sm:rounded-2xl border px-3 py-2.5 sm:px-4 sm:py-3 transition-colors",
-        isDark ? "border-white/10 bg-black/20 shadow-none" : "border-slate-200 bg-slate-50 shadow-inner"
+        isDark ? "border-white/10 bg-black/20 shadow-none" : "border-slate-300 bg-slate-100/50 shadow-inner"
       )}>
         <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-sm sm:text-sm">
           <span className={cn(

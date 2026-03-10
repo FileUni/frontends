@@ -59,28 +59,39 @@ export const LicenseManagementModal: React.FC<LicenseManagementModalProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-[130] flex items-center justify-center p-2 sm:p-4"
+      className="fixed inset-0 z-[130] flex items-center justify-center p-2 sm:p-4 animate-in fade-in duration-300"
       role="dialog"
       aria-modal="true"
     >
-      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
+      <div 
+        className={cn(
+          "absolute inset-0 backdrop-blur-2xl transition-all duration-300",
+          isDark ? "bg-black/95" : "bg-slate-900/80"
+        )} 
+        onClick={onClose} 
+      />
 
       <div className={cn(
-        "relative w-full max-w-lg max-h-[90vh] rounded-2xl border shadow-2xl overflow-hidden flex flex-col transition-all duration-300",
-        isDark ? "bg-slate-950 border-white/10 text-slate-100" : "bg-white border-gray-200 text-slate-900"
+        "relative w-full max-w-lg max-h-[90vh] rounded-2xl border shadow-2xl overflow-hidden flex flex-col animate-in zoom-in duration-300",
+        isDark ? "bg-slate-950 border-white/10 text-slate-100 ring-1 ring-white/5" : "bg-white border-gray-200 text-slate-900"
       )}>
         {/* Header */}
         <div className={cn(
-          "flex items-center justify-between gap-2 border-b px-4 py-3 sm:px-5",
-          isDark ? "border-white/10 bg-slate-900/50" : "border-gray-100 bg-gray-50/50"
+          "flex items-center justify-between gap-2 border-b px-4 py-4 sm:px-6",
+          isDark ? "border-white/10 bg-slate-900/50" : "border-slate-100 bg-slate-50/50"
         )}>
-          <div className="flex items-center gap-2 min-w-0">
-            <Key size={18} className="text-amber-500 shrink-0" />
+          <div className="flex items-center gap-3 min-w-0">
+            <div className={cn(
+              "p-2 rounded-lg",
+              isDark ? "bg-amber-500/10" : "bg-amber-50"
+            )}>
+              <Key size={18} className="text-amber-500 shrink-0" />
+            </div>
             <div className="min-w-0">
-              <h3 className="text-sm sm:text-base font-black uppercase tracking-wide truncate">
+              <h3 className="text-sm sm:text-base font-black uppercase tracking-widest truncate">
                 {t('admin.config.quickWizard.steps.license')}
               </h3>
-              <p className={cn("text-xs font-bold uppercase tracking-widest", isDark ? "text-slate-500" : "text-slate-400")}>
+              <p className={cn("text-[10px] font-bold uppercase tracking-widest mt-0.5", isDark ? "text-slate-500" : "text-slate-400")}>
                 {t('admin.config.quickWizard.fields.licenseStatus')}
               </p>
             </div>
