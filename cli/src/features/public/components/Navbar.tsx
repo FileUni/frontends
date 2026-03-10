@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useEffect } from 'react';
-import { AboutModal, type AboutUpdateInfo, useThemeStore, type Theme } from '@fileuni/shared';
+import { AboutModal, buildAboutUpdateGuideUrl, type AboutUpdateInfo, useThemeStore, type Theme } from '@fileuni/shared';
 import { useLanguageStore, type Language } from '@fileuni/shared';
 import { useAuthStore } from '@/stores/auth.ts';
 import { useAuthzStore } from '@/stores/authz.ts';
@@ -74,6 +74,7 @@ export const Navbar = () => {
   const canAccessAdmin = hasPermission("admin.access");
   const canUseChat = hasPermission("feature.chat.use") && capabilities?.enable_chat !== false;
   const isDark = theme === 'dark' || (theme === 'system' && typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  const updateGuideBaseUrl = language === 'en' ? 'https://fileuni.com/update' : 'https://fileuni.com/zh-cn/update';
 
   const navItems = useMemo(() => {
     if (capabilities?.is_config_set_mode) return []; // Config-set mode: hide nav links
@@ -188,6 +189,9 @@ export const Navbar = () => {
         updateInfo={aboutUpdateInfo}
         updateError={aboutUpdateError}
         onCheckUpdates={canAccessAdmin ? handleCheckAboutUpdates : undefined}
+        getUpdateGuideUrl={(info, updateInfo) =>
+          buildAboutUpdateGuideUrl(updateGuideBaseUrl, info, updateInfo)
+        }
       />
 
       {/* Unified Dropdown Menu */}

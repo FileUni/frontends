@@ -62,6 +62,7 @@
     "updateIdle": "No update check has been performed yet.",
     "downloadLatest": "Download Latest",
     "downloadChannel": "Download This Channel",
+    "openUpdateGuide": "Open Update Guide",
     "viewReleasePage": "View Release Page",
     "currentChannelBadge": "Current Channel",
     "channels": {

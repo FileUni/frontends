@@ -62,6 +62,7 @@
     "updateIdle": "尚未执行更新检查。",
     "downloadLatest": "下载最新版本",
     "downloadChannel": "下载该通道版本",
+    "openUpdateGuide": "打开升级说明",
     "viewReleasePage": "查看发布页面",
     "currentChannelBadge": "当前通道",
     "channels": {

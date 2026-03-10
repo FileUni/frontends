@@ -25,6 +25,15 @@ const PROJECT_REPOSITORY_URL = 'https://github.com/FileUni/FileUni-Project';
 export interface AboutUpdateInfo {
   current_version: string;
   current_channel: string;
+  artifact_kind: string;
+  target_os: string;
+  target_arch: string;
+  target_libc?: string | null;
+  install_source: {
+    source: string;
+    confidence: string;
+    evidence: string[];
+  };
   has_update: boolean;
   stable?: AboutReleaseChannelInfo | null;
   prerelease?: AboutReleaseChannelInfo | null;
@@ -49,7 +58,29 @@ export interface AboutModalProps {
   updateError?: string | null;
   onCheckUpdates?: () => void | Promise<void>;
   onOpenLink?: (url: string) => void;
+  getUpdateGuideUrl?: (info: AboutReleaseChannelInfo, updateInfo: AboutUpdateInfo) => string;
   zIndex?: number;
+}
+
+export function buildAboutUpdateGuideUrl(
+  baseUrl: string,
+  releaseInfo: AboutReleaseChannelInfo,
+  updateInfo: AboutUpdateInfo,
+): string {
+  const url = new URL(baseUrl);
+  url.searchParams.set('kind', updateInfo.artifact_kind || 'cli');
+  url.searchParams.set('channel', releaseInfo.channel || updateInfo.current_channel || 'stable');
+  url.searchParams.set('current', updateInfo.current_version || '');
+  url.searchParams.set('latest', releaseInfo.version || '');
+  url.searchParams.set('os', updateInfo.target_os || '');
+  url.searchParams.set('arch', updateInfo.target_arch || '');
+  if (updateInfo.target_libc) {
+    url.searchParams.set('libc', updateInfo.target_libc);
+  }
+  if (updateInfo.install_source?.source) {
+    url.searchParams.set('source', updateInfo.install_source.source);
+  }
+  return url.toString();
 }
 
 const LinkCard: React.FC<{
@@ -101,12 +132,15 @@ const LinkCard: React.FC<{
 
 const ReleaseRow: React.FC<{
   info: AboutReleaseChannelInfo;
+  updateInfo: AboutUpdateInfo;
   title: string;
   onOpenLink?: (url: string) => void;
+  getUpdateGuideUrl?: (info: AboutReleaseChannelInfo, updateInfo: AboutUpdateInfo) => string;
   t: any;
   isDark: boolean;
-}> = ({ info, title, onOpenLink, t, isDark }) => {
+}> = ({ info, updateInfo, title, onOpenLink, getUpdateGuideUrl, t, isDark }) => {
   const downloadUrl = info.target_download_url || info.release_page_url;
+  const primaryUrl = getUpdateGuideUrl ? getUpdateGuideUrl(info, updateInfo) : downloadUrl;
   
   return (
     <div className={cn(
@@ -147,8 +181,8 @@ const ReleaseRow: React.FC<{
             size="sm"
             variant={isDark ? "primary" : "outline"}
             className="h-8 w-8 rounded-lg p-0 shadow-sm"
-            onClick={() => onOpenLink ? onOpenLink(downloadUrl) : window.open(downloadUrl, '_blank')}
-            title={t('about.downloadChannel')}
+            onClick={() => onOpenLink ? onOpenLink(primaryUrl) : window.open(primaryUrl, '_blank')}
+            title={getUpdateGuideUrl ? t('about.openUpdateGuide') : t('about.downloadChannel')}
           >
             <Download size={14} />
           </Button>
@@ -177,6 +211,7 @@ export const AboutModal: React.FC<AboutModalProps> = ({
   updateError = null,
   onCheckUpdates,
   onOpenLink,
+  getUpdateGuideUrl,
   zIndex = 130,
 }) => {
   const { t } = useTranslation();
@@ -317,8 +352,10 @@ export const AboutModal: React.FC<AboutModalProps> = ({
                     {updateInfo.stable && (
                       <ReleaseRow 
                         info={updateInfo.stable} 
+                        updateInfo={updateInfo}
                         title={t('about.channels.stable')} 
                         onOpenLink={onOpenLink}
+                        getUpdateGuideUrl={getUpdateGuideUrl}
                         t={t}
                         isDark={isDark}
                       />
@@ -326,8 +363,10 @@ export const AboutModal: React.FC<AboutModalProps> = ({
                     {updateInfo.prerelease && (
                       <ReleaseRow 
                         info={updateInfo.prerelease} 
+                        updateInfo={updateInfo}
                         title={t('about.channels.prerelease')} 
                         onOpenLink={onOpenLink}
+                        getUpdateGuideUrl={getUpdateGuideUrl}
                         t={t}
                         isDark={isDark}
                       />

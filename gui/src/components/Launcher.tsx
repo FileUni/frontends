@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { useThemeStore, type Theme, useLanguageStore, type Language,
   AboutModal,
+  buildAboutUpdateGuideUrl,
   type AboutUpdateInfo,
   type LogEntry,
   ToastContainer,
@@ -112,6 +113,7 @@ export default function Launcher() {
 
   const [serviceInstallLevel, setServiceInstallLevel] = useState<ServiceInstallLevel>('system');
   const [serviceAutostart, setServiceAutostart] = useState(true);
+  const updateGuideBaseUrl = language === 'en' ? 'https://fileuni.com/update' : 'https://fileuni.com/zh-cn/update';
 
   // Config editor state
   const [isEditingConfig, setIsEditingConfig] = useState(false);
@@ -904,6 +906,9 @@ export default function Launcher() {
         updateInfo={aboutUpdateInfo}
         updateError={aboutUpdateError}
         onCheckUpdates={handleCheckAboutUpdates}
+        getUpdateGuideUrl={(info, updateInfo) =>
+          buildAboutUpdateGuideUrl(updateGuideBaseUrl, info, updateInfo)
+        }
         onOpenLink={(url) => {
           void handleOpenExternalLink(url);
         }}
