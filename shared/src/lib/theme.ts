@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { resolveTheme, useThemeStore, type ResolvedTheme } from '../stores/theme';
+import { applyTheme, resolveTheme, useThemeStore, type ResolvedTheme } from '../stores/theme';
 
 const subscribeSystemTheme = (onChange: (theme: ResolvedTheme) => void): (() => void) => {
   if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
@@ -18,8 +18,7 @@ const subscribeSystemTheme = (onChange: (theme: ResolvedTheme) => void): (() => 
     return () => mediaQuery.removeEventListener('change', update);
   }
 
-  mediaQuery.addListener(update);
-  return () => mediaQuery.removeListener(update);
+  return () => undefined;
 };
 
 export const useResolvedTheme = (): ResolvedTheme => {
@@ -32,7 +31,10 @@ export const useResolvedTheme = (): ResolvedTheme => {
       return undefined;
     }
 
-    return subscribeSystemTheme(setResolvedTheme);
+    return subscribeSystemTheme((nextTheme) => {
+      setResolvedTheme(nextTheme);
+      applyTheme('system');
+    });
   }, [theme]);
 
   return resolvedTheme;
