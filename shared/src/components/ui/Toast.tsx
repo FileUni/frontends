@@ -5,7 +5,7 @@ import {
   type ToastType,
   DURATION_MAP,
 } from '../../stores/toast';
-import { useThemeStore } from '../../stores/theme';
+import { useResolvedTheme } from '../../lib/theme';
 import {
   CheckCircle2,
   AlertCircle,
@@ -85,7 +85,7 @@ const getToastStyles = (
 const ToastItem: React.FC<{ toastId: string }> = ({ toastId }) => {
   const { toasts, removeToast, toggleDetails, setDoNotShowAndClose } =
     useToastStore();
-  const { theme } = useThemeStore();
+  const resolvedTheme = useResolvedTheme();
   const i18n = useContext(ToastI18nContext);
   const toast = toasts.find((t) => t.id === toastId);
 
@@ -114,11 +114,7 @@ const ToastItem: React.FC<{ toastId: string }> = ({ toastId }) => {
 
   if (!toast) return null;
 
-  const isDark =
-    theme === 'dark' ||
-    (theme === 'system' &&
-      typeof window !== 'undefined' &&
-      window.matchMedia('(prefers-color-scheme: dark)').matches);
+  const isDark = resolvedTheme === 'dark';
 
   const styles = getToastStyles(toast.type, isDark);
   const isPersistent = toast.duration === 'persistent';

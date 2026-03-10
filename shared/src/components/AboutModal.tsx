@@ -16,7 +16,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { cn } from '../lib/utils';
 import { Button } from './ui/Button';
-import { useThemeStore } from '../stores/theme';
+import { useResolvedTheme } from '../lib/theme';
 
 const PROJECT_HOMEPAGE_URL = 'https://fileuni.com';
 const PROJECT_DOCS_URL = 'https://docs.fileuni.com';
@@ -215,7 +215,7 @@ export const AboutModal: React.FC<AboutModalProps> = ({
   zIndex = 130,
 }) => {
   const { t } = useTranslation();
-  const { theme } = useThemeStore();
+  const resolvedTheme = useResolvedTheme();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -231,7 +231,7 @@ export const AboutModal: React.FC<AboutModalProps> = ({
 
   if (!isOpen) return null;
 
-  const isDark = theme === 'dark' || (theme === 'system' && mounted && typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  const isDark = resolvedTheme === 'dark';
   const currentVersionText = currentVersion || '—';
   const currentChannel = updateInfo?.current_channel || 'stable';
 

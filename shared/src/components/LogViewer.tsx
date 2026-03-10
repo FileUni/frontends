@@ -13,7 +13,7 @@ import {
   Maximize2,
   Minimize2
 } from 'lucide-react';
-import { useThemeStore } from '../stores/theme';
+import { useResolvedTheme } from '../lib/theme';
 import { cn } from '../lib/utils';
 
 /**
@@ -97,8 +97,8 @@ export const LogViewer = ({
   const [copied, setCopied] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [mounted, setMounted] = useState(false);
-  const { theme } = useThemeStore();
-  const isDark = theme === 'dark';
+  const resolvedTheme = useResolvedTheme();
+  const isDark = resolvedTheme === 'dark';
 
   useEffect(() => {
     setMounted(true);

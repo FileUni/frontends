@@ -13,6 +13,7 @@ export * from './components/QuickActionsPanel';
 export * from './components/LogViewer';
 export * from './components/ui/Button';
 export * from './components/ui/Toast';
+export * from './lib/theme';
 export * from './lib/utils';
 export * from './lib/storageHub';
 export * from './stores/theme';

@@ -4,7 +4,7 @@ import { AlertTriangle, WandSparkles } from 'lucide-react';
 import { ConfigEditorPanel } from './ConfigEditorPanel';
 import { ConfigQuickWizardModal, type ConfigQuickWizardModalProps } from './ConfigQuickWizardModal';
 import type { ConfigError, ConfigNoteEntry } from './ConfigRawEditor';
-import { useThemeStore } from '../stores/theme';
+import { useResolvedTheme } from '../lib/theme';
 import { cn } from '../lib/utils';
 
 type LineDiffStats = {
@@ -86,13 +86,13 @@ export const SystemConfigWorkbench: React.FC<SystemConfigWorkbenchProps> = ({
   const { t } = useTranslation();
   const [isQuickWizardOpen, setIsQuickWizardOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
-  const { theme } = useThemeStore();
+  const resolvedTheme = useResolvedTheme();
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  const isDark = theme === 'dark' || (theme === 'system' && mounted && typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  const isDark = resolvedTheme === 'dark';
 
   const isDirty = content !== savedContent;
   const pendingDiffStats = useMemo(() => calculateLineDiffStats(savedContent, content), [savedContent, content]);

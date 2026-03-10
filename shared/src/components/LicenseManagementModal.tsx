@@ -5,7 +5,7 @@ import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { X, Shield, Users, Fingerprint, Key, Loader2 } from 'lucide-react';
 import { cn } from '../lib/utils';
-import { useThemeStore } from '../stores/theme';
+import { useResolvedTheme } from '../lib/theme';
 
 export interface LicenseManagementModalProps {
   isOpen: boolean;
@@ -37,14 +37,14 @@ export const LicenseManagementModal: React.FC<LicenseManagementModalProps> = ({
   features,
 }) => {
   const { t } = useTranslation();
-  const { theme } = useThemeStore();
+  const resolvedTheme = useResolvedTheme();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  const isDark = theme === 'dark' || (theme === 'system' && mounted && typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  const isDark = resolvedTheme === 'dark';
 
   useEffect(() => {
     if (!isOpen) return undefined;
@@ -200,4 +200,3 @@ export const LicenseManagementModal: React.FC<LicenseManagementModalProps> = ({
     </div>
   );
 };
-

@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Download, Info, Play, Settings, Square, Trash2 } from 'lucide-react';
-import { useThemeStore } from '../stores/theme';
+import { useResolvedTheme } from '../lib/theme';
 import { cn } from '../lib/utils';
 
 export type ServiceInstallLevel = 'system' | 'user';
@@ -61,8 +61,8 @@ export const ServiceControlPanel: React.FC<ServiceControlPanelProps> = ({
   const [showServiceMenu, setShowServiceMenu] = useState(false);
   const serviceMenuRef = useRef<HTMLDivElement>(null);
   const [mounted, setMounted] = useState(false);
-  const { theme } = useThemeStore();
-  const isDark = theme === 'dark';
+  const resolvedTheme = useResolvedTheme();
+  const isDark = resolvedTheme === 'dark';
 
   useEffect(() => {
     setMounted(true);

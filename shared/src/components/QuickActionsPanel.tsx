@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { BookOpen, FileCode, FolderOpen, Globe, Info, RefreshCcw, Rocket, Settings } from 'lucide-react';
-import { useThemeStore } from '../stores/theme';
+import { useResolvedTheme } from '../lib/theme';
 import { cn } from '../lib/utils';
 
 interface QuickActionsPanelProps {
@@ -47,8 +47,8 @@ export const QuickActionsPanel: React.FC<QuickActionsPanelProps> = ({
   const [showConfigMenu, setShowConfigMenu] = useState(false);
   const configMenuRef = useRef<HTMLDivElement>(null);
   const [mounted, setMounted] = useState(false);
-  const { theme } = useThemeStore();
-  const isDark = theme === 'dark';
+  const resolvedTheme = useResolvedTheme();
+  const isDark = resolvedTheme === 'dark';
 
   useEffect(() => {
     setMounted(true);

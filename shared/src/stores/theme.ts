@@ -3,6 +3,21 @@ import { createJSONStorage, persist } from 'zustand/middleware';
 import { storageHub } from '../lib/storageHub';
 
 export type Theme = 'light' | 'dark' | 'system';
+export type ResolvedTheme = 'light' | 'dark';
+
+const getSystemTheme = (): ResolvedTheme => {
+  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
+    return 'light';
+  }
+  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+};
+
+export const resolveTheme = (theme: Theme): ResolvedTheme => {
+  if (theme === 'system') {
+    return getSystemTheme();
+  }
+  return theme;
+};
 
 interface ThemeState {
   theme: Theme;
@@ -37,10 +52,7 @@ export const useThemeStore = create<ThemeState>()(
 export function applyTheme(theme: Theme) {
   if (typeof document === 'undefined') return;
   const root = window.document.documentElement;
-  const isDark =
-    theme === 'dark' ||
-    (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
-
+  const resolved = resolveTheme(theme);
   root.classList.remove('light', 'dark');
-  root.classList.add(isDark ? 'dark' : 'light');
+  root.classList.add(resolved);
 }

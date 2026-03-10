@@ -5,7 +5,7 @@ import { AlertTriangle, Cpu, Key, Settings2, Wand2, X } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { AdminPasswordPanel } from './AdminPasswordPanel';
 import { LicenseManagementModal } from './LicenseManagementModal';
-import { useThemeStore } from '../stores/theme';
+import { useResolvedTheme } from '../lib/theme';
 
 type DatabaseType = 'postgres' | 'sqlite';
 type FriendlyStep = 'performance' | 'database' | 'cache' | 'advanced' | 'license';
@@ -1318,7 +1318,7 @@ export const ConfigQuickWizardModal: React.FC<ConfigQuickWizardModalProps> = ({
   const [showAdminPasswordPanel, setShowAdminPasswordPanel] = useState(false);
   const [isLicenseModalOpen, setIsLicenseModalOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
-  const { theme } = useThemeStore();
+  const resolvedTheme = useResolvedTheme();
 
   const draftRef = useRef<FriendlyDraft>(defaultDraft);
   const hasInitializedRef = useRef(false);
@@ -1329,7 +1329,7 @@ export const ConfigQuickWizardModal: React.FC<ConfigQuickWizardModalProps> = ({
     setMounted(true);
   }, []);
 
-  const isDark = theme === 'dark' || (theme === 'system' && mounted && typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  const isDark = resolvedTheme === 'dark';
 
   const friendlySteps = useMemo<FriendlyStep[]>(() => {
     return licenseWizard

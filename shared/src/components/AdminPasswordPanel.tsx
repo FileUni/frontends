@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Shield, Eye, EyeOff, RefreshCw, AlertTriangle, Check, X } from 'lucide-react';
-import { useThemeStore } from '../stores/theme';
+import { useResolvedTheme } from '../lib/theme';
 import { cn } from '../lib/utils';
 
 
@@ -55,8 +55,8 @@ export const AdminPasswordPanel: React.FC<AdminPasswordPanelProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [successAdminUsername, setSuccessAdminUsername] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
-  const { theme } = useThemeStore();
-  const isDark = theme === 'dark';
+  const resolvedTheme = useResolvedTheme();
+  const isDark = resolvedTheme === 'dark';
 
   const resolvedTitle = title || (mode === 'modal' ? t('launcher.reset_admin_password') : t('setup.admin.title'));
   const resolvedDescription = description || (mode === 'modal' ? t('launcher.reset_admin_password_desc') : t('setup.admin.subtitle'));

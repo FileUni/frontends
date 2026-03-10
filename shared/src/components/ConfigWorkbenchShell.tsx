@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { X } from 'lucide-react';
 import { cn } from '../lib/utils';
-import { useThemeStore } from '../stores/theme';
+import { useResolvedTheme } from '../lib/theme';
 
 interface ConfigWorkbenchShellProps {
   title: string;
@@ -24,14 +24,14 @@ export const ConfigWorkbenchShell: React.FC<ConfigWorkbenchShellProps> = ({
   bodyClassName,
   children,
 }) => {
-  const { theme } = useThemeStore();
+  const resolvedTheme = useResolvedTheme();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  const isDark = theme === 'dark' || (theme === 'system' && mounted && typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  const isDark = resolvedTheme === 'dark';
 
   return (
     <div className={cn(
@@ -71,4 +71,3 @@ export const ConfigWorkbenchShell: React.FC<ConfigWorkbenchShellProps> = ({
     </div>
   );
 };
-

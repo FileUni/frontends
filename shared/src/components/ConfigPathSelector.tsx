@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AlertTriangle, Check, X } from 'lucide-react';
-import { useThemeStore } from '../stores/theme';
+import { useResolvedTheme } from '../lib/theme';
 import { cn } from '../lib/utils';
 
 
@@ -51,8 +51,8 @@ export const ConfigPathSelector: React.FC<ConfigPathSelectorProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [mounted, setMounted] = useState(false);
-  const { theme } = useThemeStore();
-  const isDark = theme === 'dark';
+  const resolvedTheme = useResolvedTheme();
+  const isDark = resolvedTheme === 'dark';
 
   const extractErrorMessage = (errorValue: unknown): string => {
     if (errorValue instanceof Error) {
