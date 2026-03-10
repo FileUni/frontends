@@ -2589,7 +2589,7 @@
     "nixos_detected": "NixOS Detected",
     "nixos_desc": "On NixOS, it is recommended to manage the service via your Nix configuration.",
     "view_guide": "View guide",
-    "do_not_show_again": "Do not show again",
+    "do_not_show_again": "Got it",
     "view_details": "View Details",
     "hide_details": "Hide Details",
     "copy": "Copy",

@@ -2589,7 +2589,7 @@
     "nixos_detected": "检测到 NixOS",
     "nixos_desc": "在 NixOS 上，建议通过 Nix 配置来管理服务。",
     "view_guide": "查看指南",
-    "do_not_show_again": "下次不再显示",
+    "do_not_show_again": "我知道了",
     "view_details": "查看详情",
     "hide_details": "隐藏详情",
     "copy": "复制",

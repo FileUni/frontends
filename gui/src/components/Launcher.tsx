@@ -19,7 +19,6 @@ import { useThemeStore, type Theme, useLanguageStore, type Language,
   type LogEntry,
   ToastContainer,
   toast,
-  shouldShowToast,
   applyTheme,
   ToastI18nContext,
   LogViewer,
@@ -101,7 +100,6 @@ export default function Launcher() {
   const [version, setVersion] = useState<string>('0.0.0');
   const [loading, setLoading] = useState<boolean>(false);
   const [osInfo, setOsInfo] = useState<OSInfo | null>(null);
-  const nixosToastShown = useRef(false);
 
   // Log related state
   const [logs, setLogs] = useState<LogEntry[]>([]);
@@ -448,20 +446,6 @@ export default function Launcher() {
     try {
       const info = await safeInvoke<OSInfo>('get_os_info');
       setOsInfo(info);
-      if (info.nixos_hint && !nixosToastShown.current) {
-        nixosToastShown.current = true;
-        const shouldShow = await shouldShowToast('nixos_hint');
-        if (shouldShow) {
-          toast.warning(
-            `${t('launcher.nixos_detected')}\n${t('launcher.nixos_desc')}`,
-            {
-              duration: 'persistent',
-              showDoNotShowAgain: true,
-              doNotShowAgainKey: 'nixos_hint'
-            }
-          );
-        }
-      }
     } catch (e: unknown) {
       console.error(e);
     }
@@ -503,6 +487,16 @@ export default function Launcher() {
   };
 
   const handleInstall = async () => {
+    if (osInfo?.nixos_hint) {
+      toast.warning(
+        `${t('launcher.nixos_detected')}\n${t('launcher.nixos_desc')}`,
+        {
+          duration: 'persistent',
+          showDoNotShowAgain: true,
+        }
+      );
+      return;
+    }
     setLoading(true);
     try {
       await safeInvoke<string>('install_service', { level: serviceInstallLevel, autostart: serviceAutostart });
