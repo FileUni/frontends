@@ -750,8 +750,8 @@
     "updatePassword": "更新密码",
     "codeSent": "验证码已发送",
     "resetSuccess": "密码重置成功",
-    "adminRecovery": "管理员找回密码",
-    "adminRecoveryHint": "如果是管理员找回密码，请访问文档获取帮助"
+    "adminRecovery": "管理员恢复指南",
+    "adminRecoveryHint": "如果您要恢复管理员账号，请先停止 FileUni，删除配置目录中的 install.lock，然后重启以重新进入设置向导。"
   },
   "themes": {
     "light": "明亮",

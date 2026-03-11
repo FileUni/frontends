@@ -30,6 +30,7 @@ interface ConfigNotesResponse {
 
 interface BackendCapabilitiesResponse {
   runtime_os?: string;
+  is_config_set_mode?: boolean;
 }
 
 type ConfigValidationError = {
@@ -146,6 +147,28 @@ export const ConfigSetEditor: React.FC = () => {
     };
     load();
   }, [fetchStatus, fetchTemplate, fetchNotes, fetchCapabilities]);
+
+  useEffect(() => {
+    if (!completed) return undefined;
+    let cancelled = false;
+    const timer = window.setInterval(async () => {
+      try {
+        const data = await extractData<BackendCapabilitiesResponse>(
+          client.GET('/api/v1/system/backend-capabilities-handshake')
+        );
+        if (!cancelled && data.is_config_set_mode !== true) {
+          window.clearInterval(timer);
+          window.location.reload();
+        }
+      } catch {
+        // Ignore transient backend restart failures during mode switch.
+      }
+    }, 1500);
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+    };
+  }, [completed]);
 
   const handleTest = async () => {
     if (testing) return;

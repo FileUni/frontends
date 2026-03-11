@@ -704,8 +704,8 @@
     "updatePassword": "Update Password",
     "codeSent": "Verification code sent",
     "resetSuccess": "Password reset successfully",
-    "adminRecovery": "Admin Password Recovery",
-    "adminRecoveryHint": "If you are an admin, please visit the documentation for help"
+    "adminRecovery": "Admin Recovery Guide",
+    "adminRecoveryHint": "If you are recovering an admin account, stop FileUni, delete install.lock in the config directory, then restart to enter the setup wizard."
   },
   "themes": {
     "light": "Light",

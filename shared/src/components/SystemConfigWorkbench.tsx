@@ -48,6 +48,7 @@ export interface SystemConfigWorkbenchProps {
   onChange: (value: string) => void;
   onTest: () => void;
   onSave: () => void;
+  saveLabel?: string;
   onCancel?: () => void;
   showCancel?: boolean;
   reloadSummary?: string;
@@ -73,6 +74,7 @@ export const SystemConfigWorkbench: React.FC<SystemConfigWorkbenchProps> = ({
   onChange,
   onTest,
   onSave,
+  saveLabel,
   onCancel,
   showCancel = false,
   reloadSummary = '',
@@ -255,7 +257,7 @@ export const SystemConfigWorkbench: React.FC<SystemConfigWorkbenchProps> = ({
         onCancel={onCancel || (() => {})}
         title={t('admin.config.title')}
         testLabel={t('admin.config.testContent')}
-        saveLabel={t('admin.config.saveAndReload')}
+        saveLabel={saveLabel || t('admin.config.saveAndReload')}
         cancelLabel={t('common.cancel')}
         showCancel={showCancel}
         isDark={isDark}

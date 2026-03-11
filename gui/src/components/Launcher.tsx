@@ -75,6 +75,16 @@ interface MissingConfigPromptState {
   configPath: string;
 }
 
+interface InstallationStatus {
+  config_dir: string;
+  app_data_dir: string;
+  config_path: string;
+  config_exists: boolean;
+  install_lock_path: string;
+  install_lock_exists: boolean;
+  is_setup_required: boolean;
+}
+
 const extractErrorMessage = (error: unknown): string => {
   if (error instanceof Error) {
     return error.message;
@@ -123,10 +133,13 @@ export default function Launcher() {
   const [configBusy, setConfigBusy] = useState(false);
   const [configSummary, setConfigSummary] = useState('');
   const [configSummaryLevel, setConfigSummaryLevel] = useState<'success' | 'warning' | 'error' | 'info'>('info');
-  const [isResettingAdminPassword, setIsResettingAdminPassword] = useState(false);
   const [configFilePath, setConfigFilePath] = useState('');
   const [runtimeDirPresets, setRuntimeDirPresets] = useState<RuntimeDirPresets | null>(null);
   const [missingConfigPrompt, setMissingConfigPrompt] = useState<MissingConfigPromptState | null>(null);
+  const [setupStatus, setSetupStatus] = useState<InstallationStatus | null>(null);
+  const [setupRequired, setSetupRequired] = useState(false);
+  const [isSetupAdminPasswordOpen, setIsSetupAdminPasswordOpen] = useState(false);
+  const [setupApplying, setSetupApplying] = useState(false);
   const [isAboutOpen, setIsAboutOpen] = useState(false);
   const [aboutUpdateInfo, setAboutUpdateInfo] = useState<AboutUpdateInfo | null>(null);
   const [aboutUpdateError, setAboutUpdateError] = useState<string | null>(null);
@@ -198,6 +211,65 @@ export default function Launcher() {
     }
   };
 
+  const loadSetupWorkbench = async () => {
+    setConfigFetching(true);
+    try {
+      const [content, notes] = await Promise.all([
+        safeInvoke<string>('get_config_content'),
+        safeInvoke<Record<string, ConfigNoteEntry>>('get_config_notes'),
+      ]);
+      setConfigContent(content);
+      setSavedConfigContent(content);
+      setConfigNotes(notes);
+      setConfigErrors([]);
+      setConfigSummary('');
+      setConfigSummaryLevel('info');
+    } catch (error) {
+      toast.error(extractErrorMessage(error));
+    } finally {
+      setConfigFetching(false);
+    }
+  };
+
+  const inspectInstallationState = async (
+    nextConfigDir?: string | null,
+    nextAppDataDir?: string | null,
+  ) => {
+    const inspected = await inspectRuntimeDirs(nextConfigDir, nextAppDataDir);
+    let status = await safeInvoke<InstallationStatus>('inspect_installation_status', {
+      configDir: inspected.config_dir,
+      appDataDir: inspected.app_data_dir,
+    });
+
+    if (!status.config_exists) {
+      const ensured = await safeInvoke<RuntimeDirsInspection>('ensure_runtime_config', {
+        configDir: inspected.config_dir,
+        appDataDir: inspected.app_data_dir,
+      });
+      await safeInvoke<void>('set_runtime_dirs', {
+        configDir: ensured.config_dir,
+        appDataDir: ensured.app_data_dir,
+      });
+      setRuntimeDirs(ensured.config_dir, ensured.app_data_dir);
+      setConfigFilePath(ensured.config_path);
+      status = await safeInvoke<InstallationStatus>('inspect_installation_status', {
+        configDir: ensured.config_dir,
+        appDataDir: ensured.app_data_dir,
+      });
+    } else {
+      setConfigFilePath(status.config_path);
+    }
+
+    setSetupStatus(status);
+    if (status.is_setup_required) {
+      await loadSetupWorkbench();
+      setSetupRequired(true);
+    } else {
+      setSetupRequired(false);
+    }
+    return status;
+  };
+
   const closeMissingConfigPrompt = (accepted: boolean) => {
     setMissingConfigPrompt(null);
     missingConfigPromptResolver.current?.(accepted);
@@ -236,7 +308,8 @@ export default function Launcher() {
 
     const loadRuntimeDirs = async (attempt: number) => {
       try {
-        await bindRuntimeDirs(configDir, appDataDir);
+        const inspected = await bindRuntimeDirs(configDir, appDataDir);
+        await inspectInstallationState(inspected.config_dir, inspected.app_data_dir);
       } catch (error) {
         if (!cancelled && attempt < 5) {
           window.setTimeout(() => {
@@ -247,7 +320,7 @@ export default function Launcher() {
         try {
           const defaults = await safeInvoke<RuntimeDirsPayload>('get_default_runtime_dirs');
           const inspected = await bindRuntimeDirs(defaults.config_dir, defaults.app_data_dir);
-          setConfigFilePath(inspected.config_path);
+          await inspectInstallationState(inspected.config_dir, inspected.app_data_dir);
           return;
         } catch (fallbackError) {
           console.error(fallbackError);
@@ -299,7 +372,8 @@ export default function Launcher() {
 
   const handleRuntimeDirsSelected = async (nextConfigDir: string, nextAppDataDir: string) => {
     try {
-      await bindRuntimeDirs(nextConfigDir, nextAppDataDir);
+      const inspected = await bindRuntimeDirs(nextConfigDir, nextAppDataDir);
+      await inspectInstallationState(inspected.config_dir, inspected.app_data_dir);
       setShowConfigSelector(false);
       toast.success(t('launcher.messages.config_set_success'));
     } catch (e: unknown) {
@@ -588,18 +662,58 @@ export default function Launcher() {
     }
   };
 
-  const handleResetAdminPassword = async (password: string): Promise<string> => {
-    setLoading(true);
+  const handleApplySetup = async (password: string): Promise<string> => {
+    setSetupApplying(true);
     try {
-      const res = await safeInvoke<string>('reset_admin_password', { password });
-      toast.success(res || t('launcher.reset_admin_password_success'));
+      const res = await safeInvoke<string>('apply_setup_wizard', {
+        content: configContent,
+        password,
+      });
       const matched = typeof res === 'string' ? res.match(/user:\s*(.+)$/i) : null;
-      return matched?.[1]?.trim() || 'admin';
+      const username = matched?.[1]?.trim() || 'admin';
+      setSavedConfigContent(configContent);
+      setConfigSummary(t('setup.logs.setupSuccess'));
+      setConfigSummaryLevel('success');
+      setConfigErrors([]);
+      setIsSetupAdminPasswordOpen(false);
+      toast.success(t('setup.logs.setupSuccess'));
+      await inspectInstallationState(configDir, appDataDir);
+      await refreshStatus();
+      return username;
     } catch (e: unknown) {
       toast.error(extractErrorMessage(e));
       throw e;
     } finally {
-      setLoading(false);
+      setSetupApplying(false);
+    }
+  };
+
+  const handleFinalizeSetup = async () => {
+    setConfigBusy(true);
+    try {
+      const res = await safeInvoke<string[]>('test_config', { content: configContent });
+      if (res.length > 0) {
+        const errors: ConfigError[] = res.map(msg => ({
+          message: msg,
+          line: 0,
+          column: 0
+        }));
+        setConfigErrors(errors);
+        setConfigSummary(t('launcher.messages.config_test_failed'));
+        setConfigSummaryLevel('error');
+        toast.error(t('launcher.messages.config_test_failed'));
+        return;
+      }
+      setConfigErrors([]);
+      setConfigSummary('');
+      setConfigSummaryLevel('info');
+      setIsSetupAdminPasswordOpen(true);
+    } catch (e: unknown) {
+      toast.error(extractErrorMessage(e));
+      setConfigSummary(extractErrorMessage(e));
+      setConfigSummaryLevel('error');
+    } finally {
+      setConfigBusy(false);
     }
   };
 
@@ -634,6 +748,100 @@ export default function Launcher() {
     const secs = seconds % 60;
     return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
+
+  if (setupRequired) {
+    return (
+      <>
+        <div className="fixed inset-0 bg-gradient-to-br from-slate-50 via-slate-100 to-slate-200 dark:from-[#020817] dark:via-[#0a0f1d] dark:to-[#0f172a] text-slate-900 dark:text-[#f8fafc] flex flex-col overflow-hidden">
+          <div className="flex items-center justify-between p-6 sm:p-8 border-b border-slate-200/50 dark:border-slate-800/40 bg-white/50 dark:bg-slate-900/50 backdrop-blur-md">
+            <div>
+              <h1 className="text-xl sm:text-2xl font-black tracking-tight">
+                {t('setup.wizard.title')}
+              </h1>
+              <p className="text-sm mt-1 text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest">
+                {t('setup.wizard.subtitle')}
+              </p>
+            </div>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={toggleLanguage}
+                className="p-3 rounded-2xl bg-slate-100/80 dark:bg-slate-800/50 hover:bg-white dark:hover:bg-slate-700 text-slate-600 dark:text-slate-400 transition-all border border-slate-200/50 dark:border-slate-700/50"
+                title={t('launcher.switch_language')}
+              >
+                <Languages size={20} />
+              </button>
+              <button
+                onClick={toggleTheme}
+                className="p-3 rounded-2xl bg-slate-100/80 dark:bg-slate-800/50 hover:bg-white dark:hover:bg-slate-700 text-slate-600 dark:text-slate-400 transition-all border border-slate-200/50 dark:border-slate-700/50"
+                title={t('launcher.toggle_theme')}
+              >
+                {theme === 'light' ? <Sun size={20} /> : theme === 'dark' ? <Moon size={20} /> : <Monitor size={20} />}
+              </button>
+            </div>
+          </div>
+
+          <div className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-8">
+            <div className="max-w-6xl mx-auto space-y-4">
+              <div className="rounded-2xl border border-amber-300/50 bg-amber-50/90 dark:bg-amber-500/10 dark:border-amber-400/30 p-4 sm:p-5">
+                <p className="text-sm font-bold leading-6 text-amber-900 dark:text-amber-200">
+                  {t('forgotPassword.adminRecoveryHint')}
+                </p>
+                {setupStatus && (
+                  <div className="mt-3 space-y-1 text-xs font-mono text-amber-800 dark:text-amber-300 break-all">
+                    <div>{setupStatus.config_path}</div>
+                    <div>{setupStatus.install_lock_path}</div>
+                  </div>
+                )}
+              </div>
+
+              <ConfigWorkbenchShell
+                title={t('setup.wizard.title')}
+                subtitle={t('setup.wizard.subtitle')}
+                configPath={configFilePath}
+              >
+                <SystemConfigWorkbench
+                  tomlAdapter={toml}
+                  loading={configFetching}
+                  configPath={configFilePath}
+                  content={configContent}
+                  savedContent={savedConfigContent}
+                  notes={configNotes}
+                  validationErrors={configErrors}
+                  busy={configBusy}
+                  onChange={setConfigContent}
+                  onTest={handleTestConfig}
+                  onSave={handleFinalizeSetup}
+                  saveLabel={t('setup.admin.finish')}
+                  onCancel={handleResetToSavedConfig}
+                  onClearValidationErrors={() => setConfigErrors([])}
+                  showCancel={false}
+                  reloadSummary={configSummary}
+                  reloadSummaryLevel={configSummaryLevel}
+                  restartNotice={t('setup.admin.finalConfirmDesc')}
+                  quickWizardEnabled={true}
+                />
+              </ConfigWorkbenchShell>
+            </div>
+          </div>
+
+          <AdminPasswordPanel
+            mode="modal"
+            isOpen={isSetupAdminPasswordOpen}
+            onClose={() => setIsSetupAdminPasswordOpen(false)}
+            onConfirm={handleApplySetup}
+            loading={setupApplying}
+            showWarning={true}
+            showRandomGenerator={true}
+            minPasswordLength={8}
+            confirmLabel={t('setup.admin.finish')}
+          />
+        </div>
+        <ToastI18nContext.Provider value={toastI18n}>
+          <ToastContainer />
+        </ToastI18nContext.Provider>
+      </>
+    );
+  }
 
   return (
     <>
@@ -804,7 +1012,6 @@ export default function Launcher() {
                       editConfigLabel={t('launcher.edit_config')}
                       helpLabel={t('launcher.help')}
                       aboutLabel={t('about.open')}
-                      resetAdminPasswordLabel={t('launcher.reset_admin_password')}
                       configDisabled={isServiceRunning}
                       configDisabledHint={t('launcher.messages.stop_service_before_config')}
                       onConfigDisabled={() => toast.warning(t('launcher.messages.stop_service_before_config'))}
@@ -812,7 +1019,6 @@ export default function Launcher() {
                       onOpenConfigDir={handleOpenConfig}
                       onEditConfig={handleEditConfig}
                       onOpenAbout={() => setIsAboutOpen(true)}
-                      onResetAdminPassword={() => setIsResettingAdminPassword(true)}
                       showSetupWizardAction={false}
                     />
                   </div>
@@ -895,17 +1101,6 @@ export default function Launcher() {
         </div>
       )}
 
-      <AdminPasswordPanel
-        mode="modal"
-        isOpen={isResettingAdminPassword}
-        onClose={() => setIsResettingAdminPassword(false)}
-        onConfirm={handleResetAdminPassword}
-        loading={loading}
-        showWarning={false}
-        showRandomGenerator={true}
-        minPasswordLength={6}
-      />
-
       <AboutModal
         isOpen={isAboutOpen}
         onClose={() => setIsAboutOpen(false)}
@@ -948,8 +1143,6 @@ export default function Launcher() {
               showCancel={false}
               reloadSummary={configSummary}
               reloadSummaryLevel={configSummaryLevel}
-              onResetAdminPassword={handleResetAdminPassword}
-              isResettingAdminPassword={loading}
             />
           </ConfigWorkbenchShell>
         </div>
