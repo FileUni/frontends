@@ -13,6 +13,9 @@ interface QuickActionsPanelProps {
   aboutLabel?: string;
   setupWizardLabel?: string;
   setupLoading?: boolean;
+  configDisabled?: boolean;
+  configDisabledHint?: string;
+  onConfigDisabled?: () => void;
   onOpenWebUi: () => void;
   onOpenConfigDir: () => void;
   onEditConfig: () => void;
@@ -34,6 +37,9 @@ export const QuickActionsPanel: React.FC<QuickActionsPanelProps> = ({
   aboutLabel,
   setupWizardLabel,
   setupLoading = false,
+  configDisabled = false,
+  configDisabledHint,
+  onConfigDisabled,
   onOpenWebUi,
   onOpenConfigDir,
   onEditConfig,
@@ -49,6 +55,7 @@ export const QuickActionsPanel: React.FC<QuickActionsPanelProps> = ({
   const [mounted, setMounted] = useState(false);
   const resolvedTheme = useResolvedTheme();
   const isDark = resolvedTheme === 'dark';
+  const isConfigDisabled = configDisabled;
 
   useEffect(() => {
     setMounted(true);
@@ -65,6 +72,12 @@ export const QuickActionsPanel: React.FC<QuickActionsPanelProps> = ({
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, []);
+
+  useEffect(() => {
+    if (isConfigDisabled && showConfigMenu) {
+      setShowConfigMenu(false);
+    }
+  }, [isConfigDisabled, showConfigMenu]);
 
   if (!mounted) return null;
 
@@ -100,9 +113,18 @@ export const QuickActionsPanel: React.FC<QuickActionsPanelProps> = ({
 
         <div className="relative" ref={configMenuRef}>
           <button
-            onClick={() => setShowConfigMenu((prev) => !prev)}
+            onClick={() => {
+              if (isConfigDisabled) {
+                onConfigDisabled?.();
+                return;
+              }
+              setShowConfigMenu((prev) => !prev);
+            }}
+            aria-disabled={isConfigDisabled}
+            title={configDisabledHint}
             className={cn(
               "w-full flex items-center gap-3.5 p-3 rounded-xl transition-all duration-300 group border shadow-sm",
+              isConfigDisabled && "opacity-60 cursor-not-allowed",
               showConfigMenu 
                 ? 'bg-cyan-600 text-white border-transparent shadow-lg shadow-cyan-500/25' 
                 : isDark

@@ -1760,6 +1760,7 @@
       "resetUnavailable": "Embedded template not available",
       "resetHintTitle": "Reset Reminder",
       "resetHint": "Reset replaces editor content with the embedded template. Modify and save before reload.",
+      "restartNotice": "Some settings require a server restart to take full effect.",
       "unsaved": "Unsaved",
       "saved": "Saved",
       "pendingChanges": "Pending changes",
@@ -2610,7 +2611,9 @@
       "config_test_failed": "Configuration validation failed",
       "password_too_short": "Password must be at least 6 characters",
       "password_mismatch": "Passwords do not match",
-      "runtime_config_created": "Default configuration file created"
+      "runtime_config_created": "Default configuration file created",
+      "stop_service_before_dirs": "Please stop the service before modifying runtime directories.",
+      "stop_service_before_config": "Please stop the service before opening configuration actions."
     },
     "config_file_path": "Config File Path",
     "change_config": "Change Config",

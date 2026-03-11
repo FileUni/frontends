@@ -131,6 +131,7 @@ export default function Launcher() {
   const [aboutUpdateInfo, setAboutUpdateInfo] = useState<AboutUpdateInfo | null>(null);
   const [aboutUpdateError, setAboutUpdateError] = useState<string | null>(null);
   const [isCheckingAboutUpdates, setIsCheckingAboutUpdates] = useState(false);
+  const isServiceRunning = status === 'Running';
   const displayedConfigDir = configDir ?? runtimeDirPresets?.default_config_dir ?? '...';
   const displayedAppDataDir = appDataDir ?? runtimeDirPresets?.default_app_data_dir ?? '...';
   const missingConfigPromptResolver = useRef<((accepted: boolean) => void) | null>(null);
@@ -774,8 +775,19 @@ export default function Launcher() {
                           </div>
                         </div>
                         <button
-                          onClick={() => setShowConfigSelector(true)}
-                          className="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-blue-500 hover:text-white text-slate-600 dark:text-slate-400 text-sm font-bold transition-all shrink-0 shadow-sm self-start"
+                          onClick={() => {
+                            if (isServiceRunning) {
+                              toast.warning(t('launcher.messages.stop_service_before_dirs'));
+                              return;
+                            }
+                            setShowConfigSelector(true);
+                          }}
+                          disabled={isServiceRunning}
+                          className={`px-4 py-2 rounded-xl text-slate-600 dark:text-slate-400 text-sm font-bold transition-all shrink-0 shadow-sm self-start ${isServiceRunning
+                            ? 'bg-slate-100/60 dark:bg-slate-800/50 cursor-not-allowed'
+                            : 'bg-slate-100 dark:bg-slate-800 hover:bg-blue-500 hover:text-white'
+                          }`}
+                          title={isServiceRunning ? t('launcher.messages.stop_service_before_dirs') : undefined}
                         >
                           {t('launcher.modify_runtime_dirs')}
                         </button>
@@ -793,6 +805,9 @@ export default function Launcher() {
                       helpLabel={t('launcher.help')}
                       aboutLabel={t('about.open')}
                       resetAdminPasswordLabel={t('launcher.reset_admin_password')}
+                      configDisabled={isServiceRunning}
+                      configDisabledHint={t('launcher.messages.stop_service_before_config')}
+                      onConfigDisabled={() => toast.warning(t('launcher.messages.stop_service_before_config'))}
                       onOpenWebUi={handleOpenWebUI}
                       onOpenConfigDir={handleOpenConfig}
                       onEditConfig={handleEditConfig}

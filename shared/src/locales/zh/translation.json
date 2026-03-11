@@ -1778,6 +1778,7 @@
       "resetUnavailable": "内置模板不可用",
       "resetHintTitle": "重置提醒",
       "resetHint": "重置将用内置模板替换编辑器内容。在重载前请修改并保存。",
+      "restartNotice": "少数配置项需要重启服务器才能完全生效。",
       "unsaved": "未保存",
       "saved": "已保存",
       "pendingChanges": "待提交修改",
@@ -2610,7 +2611,9 @@
       "config_test_failed": "配置校验失败",
       "password_too_short": "密码长度至少为 6 位",
       "password_mismatch": "两次输入的密码不一致",
-      "runtime_config_created": "已创建默认配置文件"
+      "runtime_config_created": "已创建默认配置文件",
+      "stop_service_before_dirs": "请先停止服务后再修改运行时目录。",
+      "stop_service_before_config": "请先停止服务后再打开配置操作。"
     },
     "config_file_path": "配置文件路径",
     "change_config": "更改配置",

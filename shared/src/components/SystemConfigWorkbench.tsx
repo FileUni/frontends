@@ -52,6 +52,7 @@ export interface SystemConfigWorkbenchProps {
   showCancel?: boolean;
   reloadSummary?: string;
   reloadSummaryLevel?: 'success' | 'warning' | 'error' | 'info';
+  restartNotice?: string;
   quickWizardLicense?: ConfigQuickWizardModalProps['licenseWizard'];
   quickWizardEnabled?: boolean;
   runtimeOs?: string;
@@ -76,6 +77,7 @@ export const SystemConfigWorkbench: React.FC<SystemConfigWorkbenchProps> = ({
   showCancel = false,
   reloadSummary = '',
   reloadSummaryLevel = 'info',
+  restartNotice,
   quickWizardLicense,
   quickWizardEnabled = true,
   runtimeOs,
@@ -224,6 +226,21 @@ export const SystemConfigWorkbench: React.FC<SystemConfigWorkbenchProps> = ({
           </span>
         </div>
       </div>
+
+      {restartNotice && (
+        <div className={cn(
+          "mb-3 sm:mb-4 rounded-xl sm:rounded-2xl border px-3 py-2.5 sm:px-4 sm:py-3",
+          isDark ? "border-amber-500/30 bg-amber-500/10" : "border-amber-200 bg-amber-50"
+        )}>
+          <div className={cn(
+            "flex items-start gap-2 text-sm sm:text-sm font-semibold",
+            isDark ? "text-amber-200" : "text-amber-900"
+          )}>
+            <AlertTriangle size={16} className="mt-0.5 shrink-0" />
+            <span>{restartNotice}</span>
+          </div>
+        </div>
+      )}
 
       <ConfigEditorPanel
         configPath={configPath || t('admin.config.pathUnavailable')}

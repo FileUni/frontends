@@ -375,6 +375,7 @@ export const SystemConfigAdmin = () => {
         onCancel={handleResetToSaved}
         showCancel={false}
         onClearValidationErrors={() => setValidationErrors([])}
+        restartNotice={t('admin.config.restartNotice')}
         reloadSummary={reloadSummary}
         reloadSummaryLevel={reloadSummaryLevel}
         quickWizardLicense={{
