@@ -52,6 +52,7 @@ export interface SystemConfigWorkbenchProps {
   onCancel?: () => void;
   showCancel?: boolean;
   allowSaveWithoutChanges?: boolean;
+  forceEnableSave?: boolean;
   reloadSummary?: string;
   reloadSummaryLevel?: 'success' | 'warning' | 'error' | 'info';
   restartNotice?: string;
@@ -79,6 +80,7 @@ export const SystemConfigWorkbench: React.FC<SystemConfigWorkbenchProps> = ({
   onCancel,
   showCancel = false,
   allowSaveWithoutChanges = false,
+  forceEnableSave = false,
   reloadSummary = '',
   reloadSummaryLevel = 'info',
   restartNotice,
@@ -102,6 +104,7 @@ export const SystemConfigWorkbench: React.FC<SystemConfigWorkbenchProps> = ({
 
   const isDirty = content !== savedContent;
   const pendingDiffStats = useMemo(() => calculateLineDiffStats(savedContent, content), [savedContent, content]);
+  const isSaveDisabled = !forceEnableSave && !allowSaveWithoutChanges && !isDirty;
 
   if (loading) {
     return (
@@ -252,7 +255,7 @@ export const SystemConfigWorkbench: React.FC<SystemConfigWorkbenchProps> = ({
         notes={notes}
         errors={validationErrors}
         loading={busy}
-        saveDisabled={!allowSaveWithoutChanges && !isDirty}
+        saveDisabled={isSaveDisabled}
         onChange={onChange}
         onTest={onTest}
         onSave={onSave}

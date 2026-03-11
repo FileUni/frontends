@@ -378,6 +378,7 @@ export const ConfigSetEditor: React.FC = () => {
         onCancel={handleResetToSaved}
         showCancel={false}
         allowSaveWithoutChanges={true}
+        forceEnableSave={true}
         onClearValidationErrors={() => setValidationErrors([])}
         restartNotice={t('admin.config.restartNotice')}
         quickWizardEnabled={true}

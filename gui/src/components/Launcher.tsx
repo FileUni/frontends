@@ -845,6 +845,7 @@ export default function Launcher() {
                   saveLabel={t('setup.admin.finish')}
                   onCancel={handleResetToSavedConfig}
                   allowSaveWithoutChanges={true}
+                  forceEnableSave={true}
                   onClearValidationErrors={() => setConfigErrors([])}
                   showCancel={false}
                   reloadSummary={configSummary}
