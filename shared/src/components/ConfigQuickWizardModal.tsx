@@ -51,13 +51,13 @@ const defaultDraft: FriendlyDraft = {
   captchaPreheatMode: 'balanced',
   databaseType: 'postgres',
   postgresDsn: 'postgres://postgres:admin888@localhost:5432/fileuni',
-  sqliteDsn: 'sqlite://./fileuni.db',
+  sqliteDsn: 'sqlite://{APPDATADIR}/fileuni.db',
   dbHost: 'localhost',
   dbPort: '5432',
   dbUser: 'postgres',
   dbPass: 'admin888',
   dbName: 'fileuni',
-  sqlitePath: './fileuni.db',
+  sqlitePath: '{APPDATADIR}/fileuni.db',
   dbHealthTimeoutSeconds: '5',
   cacheType: 'valkey',
   cacheRedisUrl: 'redis://:admin888@127.0.0.1:6379',
@@ -1880,8 +1880,8 @@ export const ConfigQuickWizardModal: React.FC<ConfigQuickWizardModalProps> = ({
                               captchaPreheatMode: isLowMem ? 'memory' : 'balanced' as CaptchaPreheatMode,
                             };
                             if (preset.recommendations.databaseType === 'sqlite') {
-                              next.sqlitePath = './fileuni.db';
-                              next.sqliteDsn = 'sqlite://./fileuni.db';
+                              next.sqlitePath = '{APPDATADIR}/fileuni.db';
+                              next.sqliteDsn = 'sqlite://{APPDATADIR}/fileuni.db';
                             }
                             return next;
                           });

@@ -47,7 +47,7 @@ export const QuickActionsPanel: React.FC<QuickActionsPanelProps> = ({
   onStartSetupWizard,
   onResetAdminPassword,
   resetAdminPasswordLabel,
-  helpUrl = 'https://fileuni.eu.org/docs',
+  helpUrl = 'https://docs.fileuni.com',
   showSetupWizardAction = true,
 }) => {
   const [showConfigMenu, setShowConfigMenu] = useState(false);
