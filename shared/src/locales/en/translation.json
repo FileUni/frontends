@@ -2204,8 +2204,8 @@
       "nextSteps": "What to do next:",
       "step1": "Sign in with your administrator account.",
       "step2": "Edit and save configuration online in the Admin Console.",
-      "step3": "Or open the local config file and modify it directly.",
-      "reload": "Reload Application",
+      "step3": "Click confirm to return to the home page and continue normal startup.",
+      "reload": "Return Home",
       "docs": "View Documentation"
     },
     "logs": {
@@ -2217,7 +2217,7 @@
       "dbSuccess": "Database connection success!",
       "applyingConfig": "Applying configuration and syncing DB schema...",
       "setupFailed": "Deployment failed",
-      "setupSuccess": "Setup completed successfully! Please follow the instructions to restart."
+      "setupSuccess": "Setup completed successfully. Confirm to continue the normal flow."
     }
   },
   "chat": {
@@ -2800,8 +2800,8 @@
       "nextSteps": "What to do next:",
       "step1": "Sign in with your administrator account.",
       "step2": "Edit and save configuration online in the Admin Console.",
-      "step3": "Or open the local config file and modify it directly.",
-      "reload": "Reload Application",
+      "step3": "Click confirm to return to the launcher and continue the normal flow.",
+      "reload": "Return to Launcher",
       "docs": "View Documentation"
     },
     "logs": {
@@ -2813,7 +2813,7 @@
       "dbSuccess": "Database connection success!",
       "applyingConfig": "Applying configuration and syncing DB schema...",
       "setupFailed": "Deployment failed",
-      "setupSuccess": "Setup completed successfully! Please follow the instructions to restart."
+      "setupSuccess": "Setup completed successfully. Confirm to continue the normal flow."
     }
   }
 }

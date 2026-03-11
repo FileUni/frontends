@@ -51,6 +51,7 @@ export interface SystemConfigWorkbenchProps {
   saveLabel?: string;
   onCancel?: () => void;
   showCancel?: boolean;
+  allowSaveWithoutChanges?: boolean;
   reloadSummary?: string;
   reloadSummaryLevel?: 'success' | 'warning' | 'error' | 'info';
   restartNotice?: string;
@@ -77,6 +78,7 @@ export const SystemConfigWorkbench: React.FC<SystemConfigWorkbenchProps> = ({
   saveLabel,
   onCancel,
   showCancel = false,
+  allowSaveWithoutChanges = false,
   reloadSummary = '',
   reloadSummaryLevel = 'info',
   restartNotice,
@@ -250,7 +252,7 @@ export const SystemConfigWorkbench: React.FC<SystemConfigWorkbenchProps> = ({
         notes={notes}
         errors={validationErrors}
         loading={busy}
-        saveDisabled={!isDirty}
+        saveDisabled={!allowSaveWithoutChanges && !isDirty}
         onChange={onChange}
         onTest={onTest}
         onSave={onSave}

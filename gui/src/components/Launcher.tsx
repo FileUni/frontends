@@ -140,6 +140,8 @@ export default function Launcher() {
   const [setupRequired, setSetupRequired] = useState(false);
   const [isSetupAdminPasswordOpen, setIsSetupAdminPasswordOpen] = useState(false);
   const [setupApplying, setSetupApplying] = useState(false);
+  const [isSetupRequiredPromptOpen, setIsSetupRequiredPromptOpen] = useState(false);
+  const [isSetupCompletedPromptOpen, setIsSetupCompletedPromptOpen] = useState(false);
   const [isAboutOpen, setIsAboutOpen] = useState(false);
   const [aboutUpdateInfo, setAboutUpdateInfo] = useState<AboutUpdateInfo | null>(null);
   const [aboutUpdateError, setAboutUpdateError] = useState<string | null>(null);
@@ -537,7 +539,12 @@ export default function Launcher() {
       toast.success(t('launcher.messages.service_started'));
       await refreshStatus();
     } catch (e: unknown) {
-      toast.error(extractErrorMessage(e));
+      const message = extractErrorMessage(e);
+      if (message.includes('Setup wizard has not been completed')) {
+        setIsSetupRequiredPromptOpen(true);
+      } else {
+        toast.error(message);
+      }
     }
     setLoading(false);
   };
@@ -577,7 +584,12 @@ export default function Launcher() {
       await safeInvoke<string>('install_service', { level: serviceInstallLevel, autostart: serviceAutostart });
       toast.success(t('launcher.messages.install_requested'));
     } catch (e: unknown) {
-      toast.error(extractErrorMessage(e));
+      const message = extractErrorMessage(e);
+      if (message.includes('Setup wizard has not been completed')) {
+        setIsSetupRequiredPromptOpen(true);
+      } else {
+        toast.error(message);
+      }
     }
     setLoading(false);
   };
@@ -677,14 +689,33 @@ export default function Launcher() {
       setConfigErrors([]);
       setIsSetupAdminPasswordOpen(false);
       toast.success(t('setup.logs.setupSuccess'));
-      await inspectInstallationState(configDir, appDataDir);
-      await refreshStatus();
+      setIsSetupCompletedPromptOpen(true);
       return username;
     } catch (e: unknown) {
       toast.error(extractErrorMessage(e));
       throw e;
     } finally {
       setSetupApplying(false);
+    }
+  };
+
+  const enterSetupModeFromPrompt = async () => {
+    setIsSetupRequiredPromptOpen(false);
+    try {
+      await inspectInstallationState(configDir, appDataDir);
+    } catch (e: unknown) {
+      toast.error(extractErrorMessage(e));
+    }
+  };
+
+  const finishSetupAndReturnToLauncher = async () => {
+    setIsSetupCompletedPromptOpen(false);
+    setSetupRequired(false);
+    try {
+      await inspectInstallationState(configDir, appDataDir);
+      await refreshStatus();
+    } catch (e: unknown) {
+      toast.error(extractErrorMessage(e));
     }
   };
 
@@ -813,6 +844,7 @@ export default function Launcher() {
                   onSave={handleFinalizeSetup}
                   saveLabel={t('setup.admin.finish')}
                   onCancel={handleResetToSavedConfig}
+                  allowSaveWithoutChanges={true}
                   onClearValidationErrors={() => setConfigErrors([])}
                   showCancel={false}
                   reloadSummary={configSummary}
@@ -835,6 +867,31 @@ export default function Launcher() {
             minPasswordLength={8}
             confirmLabel={t('setup.admin.finish')}
           />
+
+          {isSetupCompletedPromptOpen && (
+            <div className="fixed inset-0 z-[160] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+              <div className="w-full max-w-md rounded-3xl border border-emerald-300/40 bg-white/95 dark:bg-slate-900/95 shadow-2xl overflow-hidden">
+                <div className="px-6 py-5 border-b border-slate-200/70 dark:border-slate-700/60">
+                  <h2 className="text-lg font-black tracking-tight text-slate-900 dark:text-slate-100">
+                    {t('setup.final.title')}
+                  </h2>
+                </div>
+                <div className="px-6 py-5">
+                  <p className="text-sm leading-6 text-slate-600 dark:text-slate-300">
+                    {t('setup.logs.setupSuccess')}
+                  </p>
+                </div>
+                <div className="px-6 py-5 border-t border-slate-200/70 dark:border-slate-700/60 flex items-center justify-end bg-slate-50/80 dark:bg-slate-950/40">
+                  <button
+                    onClick={() => { void finishSetupAndReturnToLauncher(); }}
+                    className="px-5 py-2.5 rounded-xl text-sm font-bold text-white bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 shadow-lg shadow-emerald-500/25 transition-all"
+                  >
+                    {t('common.confirm')}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
         <ToastI18nContext.Provider value={toastI18n}>
           <ToastContainer />
@@ -1095,6 +1152,42 @@ export default function Launcher() {
                 className="px-5 py-2.5 rounded-xl text-sm font-bold text-white bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 shadow-lg shadow-blue-500/25 transition-all"
               >
                 {t('launcher.runtime_config_missing_accept')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {isSetupRequiredPromptOpen && (
+        <div className="fixed inset-0 z-[140] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="w-full max-w-lg rounded-3xl border border-amber-300/40 bg-white/95 dark:bg-slate-900/95 shadow-2xl overflow-hidden">
+            <div className="px-6 py-5 border-b border-slate-200/70 dark:border-slate-700/60">
+              <h2 className="text-lg font-black tracking-tight text-slate-900 dark:text-slate-100">
+                {t('setup.wizard.title')}
+              </h2>
+            </div>
+            <div className="px-6 py-5 space-y-4">
+              <p className="text-sm leading-6 text-slate-600 dark:text-slate-300">
+                {t('forgotPassword.adminRecoveryHint')}
+              </p>
+              {setupStatus?.install_lock_path && (
+                <div className="rounded-2xl bg-slate-100/80 dark:bg-slate-800/80 px-4 py-3 text-sm font-mono break-all text-slate-700 dark:text-slate-200">
+                  {setupStatus.install_lock_path}
+                </div>
+              )}
+            </div>
+            <div className="px-6 py-5 border-t border-slate-200/70 dark:border-slate-700/60 flex items-center justify-end gap-3 bg-slate-50/80 dark:bg-slate-950/40">
+              <button
+                onClick={() => setIsSetupRequiredPromptOpen(false)}
+                className="px-4 py-2.5 rounded-xl text-sm font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-200/70 dark:hover:bg-slate-800 transition-colors"
+              >
+                {t('common.cancel')}
+              </button>
+              <button
+                onClick={() => { void enterSetupModeFromPrompt(); }}
+                className="px-5 py-2.5 rounded-xl text-sm font-bold text-white bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 shadow-lg shadow-amber-500/25 transition-all"
+              >
+                {t('launcher.setup_wizard')}
               </button>
             </div>
           </div>

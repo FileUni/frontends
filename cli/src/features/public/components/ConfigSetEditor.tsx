@@ -82,6 +82,7 @@ export const ConfigSetEditor: React.FC = () => {
   const [applying, setApplying] = useState(false);
   const [resettingAdminPassword, setResettingAdminPassword] = useState(false);
   const [completed, setCompleted] = useState(false);
+  const [finishing, setFinishing] = useState(false);
 
   const fetchStatus = useCallback(async () => {
     try {
@@ -148,27 +149,34 @@ export const ConfigSetEditor: React.FC = () => {
     load();
   }, [fetchStatus, fetchTemplate, fetchNotes, fetchCapabilities]);
 
-  useEffect(() => {
-    if (!completed) return undefined;
-    let cancelled = false;
-    const timer = window.setInterval(async () => {
-      try {
-        const data = await extractData<BackendCapabilitiesResponse>(
-          client.GET('/api/v1/system/backend-capabilities-handshake')
-        );
-        if (!cancelled && data.is_config_set_mode !== true) {
-          window.clearInterval(timer);
-          window.location.reload();
+  const finishAndReturnToHome = async () => {
+    if (finishing) return;
+    setFinishing(true);
+    try {
+      await extractData(client.POST('/api/v1/config-set/finish'));
+      const startedAt = Date.now();
+      const timer = window.setInterval(async () => {
+        try {
+          const data = await extractData<BackendCapabilitiesResponse>(
+            client.GET('/api/v1/system/backend-capabilities-handshake')
+          );
+          if (data.is_config_set_mode !== true) {
+            window.clearInterval(timer);
+            window.location.replace('/ui');
+            return;
+          }
+        } catch {
+          if (Date.now() - startedAt > 20_000) {
+            window.clearInterval(timer);
+            window.location.replace('/ui');
+          }
         }
-      } catch {
-        // Ignore transient backend restart failures during mode switch.
-      }
-    }, 1500);
-    return () => {
-      cancelled = true;
-      window.clearInterval(timer);
-    };
-  }, [completed]);
+      }, 1000);
+    } catch (e) {
+      setFinishing(false);
+      addToast(handleApiError(e, t), 'error');
+    }
+  };
 
   const handleTest = async () => {
     if (testing) return;
@@ -246,7 +254,7 @@ export const ConfigSetEditor: React.FC = () => {
       );
       setAdminUsername(resolvedAdminUsername);
       setCompleted(true);
-      addToast(t('launcher.reset_admin_password_success'), 'success');
+      addToast(t('configSet.logs.success') || 'Configuration saved successfully', 'success');
       return resolvedAdminUsername;
     } catch (e) {
       const errData = extractValidationErrorsFromException(e);
@@ -317,10 +325,11 @@ export const ConfigSetEditor: React.FC = () => {
             </div>
           </div>
           <button
-            onClick={() => window.location.reload()}
-            className="px-6 h-10 bg-primary text-primary-foreground rounded-lg text-sm font-semibold"
+            onClick={() => { void finishAndReturnToHome(); }}
+            disabled={finishing}
+            className="px-6 h-10 bg-primary text-primary-foreground rounded-lg text-sm font-semibold disabled:opacity-60 disabled:cursor-not-allowed"
           >
-            {t('configSet.final.reload')}
+            {finishing ? t('common.processing') : t('common.confirm')}
           </button>
         </div>
       </ConfigWorkbenchShell>
@@ -368,6 +377,7 @@ export const ConfigSetEditor: React.FC = () => {
         onSave={() => setShowAdminPanel(true)}
         onCancel={handleResetToSaved}
         showCancel={false}
+        allowSaveWithoutChanges={true}
         onClearValidationErrors={() => setValidationErrors([])}
         restartNotice={t('admin.config.restartNotice')}
         quickWizardEnabled={true}
