@@ -1,11 +1,11 @@
 import React, { useMemo, useRef, useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import Editor, { loader, type OnMount } from "@monaco-editor/react";
+import Editor, { type OnMount } from "@monaco-editor/react";
 import type { editor as MonacoEditor } from "monaco-editor";
-import editorWorker from "monaco-editor/esm/vs/editor/editor.worker?worker";
 import { AlertTriangle } from "lucide-react";
 import { Button } from "./ui/Button";
 import { cn } from "../lib/utils";
+import { useMonacoReady } from "../lib/monaco";
 
 /**
  * Configuration note entry interface
@@ -36,12 +36,6 @@ interface ConfigRawEditorProps {
   activePath?: string;
   hideNotes?: boolean;
   isDark?: boolean;
-}
-
-interface MonacoWindow extends Window {
-  MonacoEnvironment?: {
-    getWorker: (_moduleId: string, _label: string) => Worker;
-  };
 }
 
 type MonacoModule = typeof import("monaco-editor");
@@ -167,49 +161,17 @@ export const ConfigRawEditor: React.FC<ConfigRawEditorProps> = ({
   const monacoRef = useRef<MonacoModule | null>(null);
   const [internalActivePath, setInternalActivePath] = useState("");
   const decorationCollectionRef = useRef<MonacoEditor.IEditorDecorationsCollection | null>(null);
-  const [monacoStatus, setMonacoStatus] = useState<"pending" | "ready" | "failed">("pending");
-  const [useFallbackEditor, setUseFallbackEditor] = useState(false);
+  const monacoStatus = useMonacoReady();
+  const useFallbackEditor = monacoStatus === "failed";
   const resolvedHeight = height === "100%" ? "clamp(360px, 62vh, 900px)" : height;
 
   const activePath = externalActivePath || internalActivePath;
 
   useEffect(() => {
-    let cancelled = false;
-
-    // Configure local Monaco runtime in component lifecycle.
-    const setupMonaco = async () => {
-      if (typeof window === "undefined") return;
-      try {
-        const monacoWindow = window as MonacoWindow;
-        monacoWindow.MonacoEnvironment = {
-          getWorker: function (_moduleId: string, _label: string) {
-            return new editorWorker();
-          },
-        };
-        const monacoInstance: MonacoModule = await import("monaco-editor");
-        if (!cancelled) {
-          loader.config({ monaco: monacoInstance });
-          await loader.init();
-          if (!cancelled) {
-            setMonacoStatus("ready");
-            setUseFallbackEditor(false);
-          }
-        }
-      } catch (error: unknown) {
-        console.error("Failed to initialize Monaco loader:", error);
-        if (!cancelled) {
-          setMonacoStatus("failed");
-          setUseFallbackEditor(true);
-        }
-      }
-    };
-
-    void setupMonaco();
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+    if (monacoStatus === "failed") {
+      console.error("Failed to initialize Monaco loader");
+    }
+  }, [monacoStatus]);
 
   const activeNote = useMemo(() => {
     if (!activePath) return null;

@@ -3,6 +3,7 @@ import type { TFunction } from 'i18next';
 import { useNavigationStore, type RouteParams } from '@/stores/navigation';
 import { useAuthStore } from '@/stores/auth';
 import { useAuthzStore } from '@/stores/authz';
+import { useConfigStore } from '@/stores/config';
 import { useTranslation } from 'react-i18next';
 import { DashboardLayout } from '@/features/user-center/components/DashboardLayout';
 import { FileSidebar } from '@/features/file-manager/components/FileSidebar';
@@ -57,6 +58,8 @@ export const AppRouter: React.FC = () => {
   const { isLoggedIn } = useAuthStore();
   const { t } = useTranslation();
   const { hasPermission } = useAuthzStore();
+  const { capabilities } = useConfigStore();
+  const isSetupMode = capabilities?.is_config_set_mode === true;
 
   const mod = params.mod || 'public';
   const page = params.page || 'index';
@@ -67,6 +70,14 @@ export const AppRouter: React.FC = () => {
       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
     </div>
   );
+
+  if (isSetupMode) {
+    return (
+      <Suspense fallback={fallback}>
+        <WelcomeView />
+      </Suspense>
+    );
+  }
 
   // Auth check
   const isPublicPage = mod === 'public' || (mod === 'file-manager' && page === 'share') || (mod === 'chat' && page === 'guest');

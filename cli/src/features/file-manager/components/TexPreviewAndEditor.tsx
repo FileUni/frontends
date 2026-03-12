@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import Editor from '@monaco-editor/react';
+import { MonacoEditor } from '@fileuni/shared';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button.tsx';
 import { FilePreviewHeader } from './FilePreviewHeader.tsx';
@@ -357,11 +357,11 @@ export const TexPreviewAndEditor = ({ path, isDark, onClose }: Props) => {
               {t('filemanager.editor.opening') || 'Opening'}
             </div>
           ) : (
-            <Editor
-              height="100%"
-              language="latex"
-              value={content}
-              theme={isDark ? 'vs-dark' : 'light'}
+        <MonacoEditor
+          height="100%"
+          language="latex"
+          value={content}
+          theme={isDark ? 'vs-dark' : 'light'}
               options={{
                 readOnly: false,
                 fontSize: 14,

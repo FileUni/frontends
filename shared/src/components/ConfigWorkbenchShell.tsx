@@ -9,6 +9,7 @@ interface ConfigWorkbenchShellProps {
   configPath?: string | null;
   onClose?: () => void;
   closeAriaLabel?: string;
+  headerActions?: React.ReactNode;
   containerClassName?: string;
   bodyClassName?: string;
   children: React.ReactNode;
@@ -20,6 +21,7 @@ export const ConfigWorkbenchShell: React.FC<ConfigWorkbenchShellProps> = ({
   configPath,
   onClose,
   closeAriaLabel = 'Close',
+  headerActions,
   containerClassName,
   bodyClassName,
   children,
@@ -51,18 +53,23 @@ export const ConfigWorkbenchShell: React.FC<ConfigWorkbenchShellProps> = ({
             <div className="text-xs sm:text-sm font-mono text-slate-400 truncate">{configPath}</div>
           ) : null}
         </div>
-        {onClose && (
-          <button
-            type="button"
-            onClick={onClose}
-            className={cn(
-              "h-8 w-8 rounded-lg border inline-flex items-center justify-center transition-colors",
-              isDark ? "border-white/20 text-slate-300 hover:bg-white/10" : "border-slate-200 text-slate-600 hover:bg-slate-100"
+        {(headerActions || onClose) && (
+          <div className="flex items-center gap-2">
+            {headerActions}
+            {onClose && (
+              <button
+                type="button"
+                onClick={onClose}
+                className={cn(
+                  "h-8 w-8 rounded-lg border inline-flex items-center justify-center transition-colors",
+                  isDark ? "border-white/20 text-slate-300 hover:bg-white/10" : "border-slate-200 text-slate-600 hover:bg-slate-100"
+                )}
+                aria-label={closeAriaLabel}
+              >
+                <X size={16} />
+              </button>
             )}
-            aria-label={closeAriaLabel}
-          >
-            <X size={16} />
-          </button>
+          </div>
         )}
       </div>
       <div className={cn('flex-1 min-h-0 overflow-y-auto p-2 sm:p-4 lg:p-6', bodyClassName)}>

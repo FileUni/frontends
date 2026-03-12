@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
-import { AlertTriangle, Cpu, Key, Settings2, Wand2, X } from 'lucide-react';
+import { AlertTriangle, Cpu, Key, Settings2, Shield, Wand2, X } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { AdminPasswordPanel } from './AdminPasswordPanel';
 import { LicenseManagementModal } from './LicenseManagementModal';
@@ -1296,6 +1296,7 @@ export interface ConfigQuickWizardModalProps {
   };
   onResetAdminPassword?: (password: string) => Promise<void | string | { username?: string }>;
   isResettingAdminPassword?: boolean;
+  adminPasswordPanelProps?: Partial<import('./AdminPasswordPanel').AdminPasswordPanelProps>;
   runtimeOs?: string;
 }
 
@@ -1308,6 +1309,7 @@ export const ConfigQuickWizardModal: React.FC<ConfigQuickWizardModalProps> = ({
   licenseWizard,
   onResetAdminPassword,
   isResettingAdminPassword = false,
+  adminPasswordPanelProps,
   runtimeOs,
 }) => {
   const { t } = useTranslation();
@@ -1781,6 +1783,21 @@ export const ConfigQuickWizardModal: React.FC<ConfigQuickWizardModalProps> = ({
             <p className={cn("text-[10px] sm:text-xs font-bold uppercase tracking-[0.1em] mt-1", isDark ? "text-slate-500" : "text-slate-400")}>{t('admin.config.quickWizard.subtitle')}</p>
           </div>
           <div className="flex items-center gap-2">
+            {onResetAdminPassword && (
+              <button
+                type="button"
+                onClick={() => setShowAdminPasswordPanel(true)}
+                className={cn(
+                  "h-8 px-3 rounded-lg border text-xs font-black uppercase tracking-wider inline-flex items-center gap-1.5 transition-all",
+                  isDark
+                    ? "border-cyan-400/40 bg-cyan-500/10 text-cyan-200 hover:bg-cyan-500/20"
+                    : "border-cyan-500/50 bg-cyan-50 text-cyan-900 hover:bg-cyan-100"
+                )}
+              >
+                <Shield size={14} />
+                {t('admin.config.quickWizard.actions.setAdminPassword')}
+              </button>
+            )}
             <button 
               type="button" 
               onClick={onClose} 
@@ -2505,23 +2522,6 @@ export const ConfigQuickWizardModal: React.FC<ConfigQuickWizardModalProps> = ({
                         {t('admin.config.quickWizard.steps.license')}
                       </button>
                     )}
-                    <button
-                      type="button"
-                      className={cn(
-                        "h-12 rounded-lg border text-sm sm:text-sm font-black transition-all disabled:opacity-50 shadow-sm",
-                        isDark 
-                          ? "border-cyan-400/40 bg-cyan-500/10 text-cyan-200 hover:bg-cyan-500/20" 
-                          : "border-cyan-500/50 bg-cyan-50 text-cyan-900 hover:bg-cyan-100"
-                      )}
-                      onClick={() => {
-                        if (onResetAdminPassword) {
-                          setShowAdminPasswordPanel(true);
-                        }
-                      }}
-                      disabled={!onResetAdminPassword}
-                    >
-                      {t('admin.config.quickWizard.advancedActions.changeAdminPassword')}
-                    </button>
                   </div>
                 </section>
               )}
@@ -2643,6 +2643,7 @@ export const ConfigQuickWizardModal: React.FC<ConfigQuickWizardModalProps> = ({
           showRandomGenerator={true}
           minPasswordLength={8}
           zIndex={140}
+          {...adminPasswordPanelProps}
         />
       )}
 

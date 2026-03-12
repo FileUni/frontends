@@ -38,6 +38,7 @@ export const App: React.FC = () => {
   const { capabilities, fetchCapabilities } = useConfigStore();
   const { fetchEntitlements, clear: clearEntitlements, hasPermission } = useAuthzStore();
   const isSetupMode = capabilities?.is_config_set_mode === true;
+  const canInitFeatures = Boolean(capabilities) && !isSetupMode;
 
   React.useEffect(() => {
     void fetchCapabilities();
@@ -50,27 +51,27 @@ export const App: React.FC = () => {
 
   const content = (
     <>
-      {!isSetupMode && <Navbar />}
+      {canInitFeatures && <Navbar />}
       <main className="flex-1 flex flex-col">
         <AppRouter />
       </main>
-      {!isSetupMode && <GlobalAudioPlayer />}
-      {!isSetupMode && <MustChangePasswordModal />}
+      {canInitFeatures && <GlobalAudioPlayer />}
+      {canInitFeatures && <MustChangePasswordModal />}
     </>
   );
 
   React.useEffect(() => {
-    if (!isLoggedIn) {
+    if (!isLoggedIn || !canInitFeatures) {
       clearEntitlements();
       return;
     }
     void fetchEntitlements();
-  }, [isLoggedIn, currentUserId, fetchEntitlements, clearEntitlements]);
+  }, [isLoggedIn, currentUserId, fetchEntitlements, clearEntitlements, canInitFeatures]);
 
-  const canUseChat = (capabilities?.enable_chat !== false) && hasPermission("feature.chat.use");
-  const canUseEmail = (capabilities?.enable_email_manager !== false) && hasPermission("feature.email_manager.use");
+  const canUseChat = canInitFeatures && (capabilities?.enable_chat !== false) && hasPermission("feature.chat.use");
+  const canUseEmail = canInitFeatures && (capabilities?.enable_email_manager !== false) && hasPermission("feature.email_manager.use");
 
-  if (isSetupMode || !chatAuth) {
+  if (!canInitFeatures || !chatAuth) {
     return (
       <ToastProvider>
         {content}

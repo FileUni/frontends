@@ -139,6 +139,10 @@ export default function Launcher() {
   const [setupStatus, setSetupStatus] = useState<InstallationStatus | null>(null);
   const [setupRequired, setSetupRequired] = useState(false);
   const [isSetupAdminPasswordOpen, setIsSetupAdminPasswordOpen] = useState(false);
+  const [setupAdminUsername, setSetupAdminUsername] = useState('admin');
+  const [setupAdminAction, setSetupAdminAction] = useState('existing_admin');
+  const [setupPasswordHint, setSetupPasswordHint] = useState<string | null>(null);
+  const [pendingAdminPassword, setPendingAdminPassword] = useState('');
   const [setupApplying, setSetupApplying] = useState(false);
   const [isSetupRequiredPromptOpen, setIsSetupRequiredPromptOpen] = useState(false);
   const [isSetupCompletedPromptOpen, setIsSetupCompletedPromptOpen] = useState(false);
@@ -674,15 +678,25 @@ export default function Launcher() {
     }
   };
 
+  type SetupWizardResult = {
+    admin_username: string;
+    admin_action: string;
+    password_hint?: string | null;
+  };
+
   const handleApplySetup = async (password: string): Promise<string> => {
     setSetupApplying(true);
     try {
-      const res = await safeInvoke<string>('apply_setup_wizard', {
+      const res = await safeInvoke<SetupWizardResult>('apply_setup_wizard', {
         content: configContent,
         password,
       });
-      const matched = typeof res === 'string' ? res.match(/user:\s*(.+)$/i) : null;
-      const username = matched?.[1]?.trim() || 'admin';
+      const username = res?.admin_username?.trim() || 'admin';
+      setSetupAdminUsername(username);
+      if (res?.admin_action) {
+        setSetupAdminAction(res.admin_action);
+      }
+      setSetupPasswordHint(res?.password_hint ?? null);
       setSavedConfigContent(configContent);
       setConfigSummary(t('setup.logs.setupSuccess'));
       setConfigSummaryLevel('success');
@@ -690,10 +704,22 @@ export default function Launcher() {
       setIsSetupAdminPasswordOpen(false);
       toast.success(t('setup.logs.setupSuccess'));
       setIsSetupCompletedPromptOpen(true);
+      setPendingAdminPassword('');
       return username;
     } catch (e: unknown) {
       toast.error(extractErrorMessage(e));
       throw e;
+    } finally {
+      setSetupApplying(false);
+    }
+  };
+
+  const handleStoreAdminPassword = async (password: string): Promise<string> => {
+    setSetupApplying(true);
+    try {
+      setPendingAdminPassword(password);
+      setIsSetupAdminPasswordOpen(false);
+      return setupAdminUsername;
     } finally {
       setSetupApplying(false);
     }
@@ -722,23 +748,7 @@ export default function Launcher() {
   const handleFinalizeSetup = async () => {
     setConfigBusy(true);
     try {
-      const res = await safeInvoke<string[]>('test_config', { content: configContent });
-      if (res.length > 0) {
-        const errors: ConfigError[] = res.map(msg => ({
-          message: msg,
-          line: 0,
-          column: 0
-        }));
-        setConfigErrors(errors);
-        setConfigSummary(t('launcher.messages.config_test_failed'));
-        setConfigSummaryLevel('error');
-        toast.error(t('launcher.messages.config_test_failed'));
-        return;
-      }
-      setConfigErrors([]);
-      setConfigSummary('');
-      setConfigSummaryLevel('info');
-      setIsSetupAdminPasswordOpen(true);
+      await handleApplySetup(pendingAdminPassword);
     } catch (e: unknown) {
       toast.error(extractErrorMessage(e));
       setConfigSummary(extractErrorMessage(e));
@@ -771,6 +781,17 @@ export default function Launcher() {
       default: return t('launcher.status.unknown');
     }
   };
+
+  const setupFinalMessage =
+    (setupAdminAction === 'created_default'
+      ? t('setup.final.adminCreatedDefault', { user: setupAdminUsername, password: setupPasswordHint || 'admin888' })
+      : setupAdminAction === 'created_with_password'
+        ? t('setup.final.adminCreatedWithPassword', { user: setupAdminUsername, password: setupPasswordHint || '' })
+        : setupAdminAction === 'reset_password'
+          ? t('setup.final.adminReset', { user: setupAdminUsername, password: setupPasswordHint || '' })
+          : setupAdminAction === 'existing_admin'
+            ? t('setup.final.adminExisting', { user: setupAdminUsername })
+            : '');
 
   // Format uptime
   const formatUptime = (seconds: number) => {
@@ -852,22 +873,37 @@ export default function Launcher() {
                   reloadSummaryLevel={configSummaryLevel}
                   restartNotice={t('setup.admin.finalConfirmDesc')}
                   quickWizardEnabled={true}
+                  onOpenAdminPassword={() => {
+                    setIsSetupAdminPasswordOpen(true);
+                  }}
+                  adminPasswordLabel={t('setup.admin.changePassword')}
+                  onResetAdminPassword={handleStoreAdminPassword}
+                  isResettingAdminPassword={setupApplying}
+                  adminPasswordPanelProps={{
+                    showWarning: false,
+                    showSuccess: false,
+                    showResetHint: false,
+                    confirmLabel: t('setup.admin.changePassword'),
+                  }}
                 />
               </ConfigWorkbenchShell>
             </div>
           </div>
 
-          <AdminPasswordPanel
-            mode="modal"
-            isOpen={isSetupAdminPasswordOpen}
-            onClose={() => setIsSetupAdminPasswordOpen(false)}
-            onConfirm={handleApplySetup}
-            loading={setupApplying}
-            showWarning={true}
-            showRandomGenerator={true}
-            minPasswordLength={8}
-            confirmLabel={t('setup.admin.finish')}
-          />
+            <AdminPasswordPanel
+              mode="modal"
+              isOpen={isSetupAdminPasswordOpen}
+              onClose={() => setIsSetupAdminPasswordOpen(false)}
+              onConfirm={handleStoreAdminPassword}
+              loading={setupApplying}
+              showWarning={false}
+              showRandomGenerator={true}
+              minPasswordLength={8}
+              confirmLabel={t('setup.admin.changePassword')}
+              showSuccess={false}
+              showResetHint={false}
+              pendingHint={t('setup.admin.pendingHint')}
+            />
 
           {isSetupCompletedPromptOpen && (
             <div className="fixed inset-0 z-[160] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
@@ -879,7 +915,7 @@ export default function Launcher() {
                 </div>
                 <div className="px-6 py-5">
                   <p className="text-sm leading-6 text-slate-600 dark:text-slate-300">
-                    {t('setup.logs.setupSuccess')}
+                    {setupFinalMessage || t('setup.final.subtitle', { user: setupAdminUsername })}
                   </p>
                 </div>
                 <div className="px-6 py-5 border-t border-slate-200/70 dark:border-slate-700/60 flex items-center justify-end bg-slate-50/80 dark:bg-slate-950/40">

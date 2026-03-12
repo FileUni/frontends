@@ -22,6 +22,9 @@ export interface AdminPasswordPanelProps {
   showRandomGenerator?: boolean;
   minPasswordLength?: number;
   zIndex?: number;
+  showSuccess?: boolean;
+  showResetHint?: boolean;
+  pendingHint?: string;
 }
 
 const generateRandomPassword = (length = 16): string => {
@@ -48,6 +51,9 @@ export const AdminPasswordPanel: React.FC<AdminPasswordPanelProps> = ({
   showRandomGenerator = true,
   minPasswordLength = 8,
   zIndex = 100,
+  showSuccess = true,
+  showResetHint = true,
+  pendingHint,
 }) => {
   const { t } = useTranslation();
   const [password, setPassword] = useState('');
@@ -99,10 +105,12 @@ export const AdminPasswordPanel: React.FC<AdminPasswordPanelProps> = ({
     }
     setError(null);
     const result = await onConfirm(password);
-    const resolvedUsername = typeof result === 'string'
-      ? result
-      : (typeof result === 'object' && result !== null && typeof result.username === 'string' ? result.username : 'admin');
-    setSuccessAdminUsername(resolvedUsername);
+    if (showSuccess) {
+      const resolvedUsername = typeof result === 'string'
+        ? result
+        : (typeof result === 'object' && result !== null && typeof result.username === 'string' ? result.username : 'admin');
+      setSuccessAdminUsername(resolvedUsername);
+    }
   };
 
   const isConfirmDisabled = loading || password.length < minPasswordLength;
@@ -170,15 +178,26 @@ export const AdminPasswordPanel: React.FC<AdminPasswordPanelProps> = ({
           </div>
         )}
 
-        <div className={cn(
-          "p-4 border rounded-2xl text-xs font-bold leading-relaxed",
-          isDark ? "bg-cyan-500/5 border-cyan-500/10 text-cyan-400" : "bg-cyan-50 border-cyan-100 text-cyan-700"
-        )}>
-          {t(
-            'setup.admin.resetRuleHint',
-            'Reset policy: if an admin exists, reset the first admin password; if none exists, create an admin user with username admin.',
-          )}
-        </div>
+        {showResetHint && (
+          <div className={cn(
+            "p-4 border rounded-2xl text-xs font-bold leading-relaxed",
+            isDark ? "bg-cyan-500/5 border-cyan-500/10 text-cyan-400" : "bg-cyan-50 border-cyan-100 text-cyan-700"
+          )}>
+            {t(
+              'setup.admin.resetRuleHint',
+              'Reset policy: if an admin exists, reset the first admin password; if none exists, create an admin user with username admin.',
+            )}
+          </div>
+        )}
+
+        {pendingHint && (
+          <div className={cn(
+            "p-4 border rounded-2xl text-xs font-bold leading-relaxed",
+            isDark ? "bg-amber-500/5 border-amber-500/10 text-amber-300" : "bg-amber-50 border-amber-100 text-amber-700"
+          )}>
+            {pendingHint}
+          </div>
+        )}
 
         {successAdminUsername && (
           <div className={cn(

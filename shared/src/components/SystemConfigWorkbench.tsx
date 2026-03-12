@@ -62,6 +62,9 @@ export interface SystemConfigWorkbenchProps {
   onClearValidationErrors?: () => void;
   onResetAdminPassword?: (password: string) => Promise<void | string | { username?: string }>;
   isResettingAdminPassword?: boolean;
+  onOpenAdminPassword?: () => void;
+  adminPasswordLabel?: string;
+  adminPasswordPanelProps?: ConfigQuickWizardModalProps['adminPasswordPanelProps'];
 }
 
 export const SystemConfigWorkbench: React.FC<SystemConfigWorkbenchProps> = ({
@@ -90,6 +93,9 @@ export const SystemConfigWorkbench: React.FC<SystemConfigWorkbenchProps> = ({
   onClearValidationErrors,
   onResetAdminPassword,
   isResettingAdminPassword,
+  onOpenAdminPassword,
+  adminPasswordLabel,
+  adminPasswordPanelProps,
 }) => {
   const { t } = useTranslation();
   const [isQuickWizardOpen, setIsQuickWizardOpen] = useState(false);
@@ -116,6 +122,40 @@ export const SystemConfigWorkbench: React.FC<SystemConfigWorkbenchProps> = ({
       </div>
     );
   }
+
+  const actionButtons = (
+    <div className="flex items-center gap-2 flex-wrap">
+      {quickWizardEnabled && (
+        <button
+          type="button"
+          className={cn(
+            "px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg sm:rounded-xl border font-black uppercase tracking-wide transition-all inline-flex items-center gap-1.5 shadow-sm",
+            isDark 
+              ? "border-white/15 hover:bg-white/10 text-slate-300" 
+              : "border-slate-300 bg-white hover:bg-slate-50 text-slate-900"
+          )}
+          onClick={() => setIsQuickWizardOpen(true)}
+        >
+          <WandSparkles size={18} className="text-primary" />
+          {t('admin.config.quickWizard.title')}
+        </button>
+      )}
+      {onOpenAdminPassword && (
+        <button
+          type="button"
+          className={cn(
+            "px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg sm:rounded-xl border font-black uppercase tracking-wide transition-all inline-flex items-center gap-1.5 shadow-sm",
+            isDark 
+              ? "border-cyan-400/40 bg-cyan-500/10 text-cyan-200 hover:bg-cyan-500/20" 
+              : "border-cyan-500/50 bg-cyan-50 text-cyan-900 hover:bg-cyan-100"
+          )}
+          onClick={onOpenAdminPassword}
+        >
+          {adminPasswordLabel || t('setup.admin.changePassword')}
+        </button>
+      )}
+    </div>
+  );
 
   return (
     <div className={cn(
@@ -266,21 +306,7 @@ export const SystemConfigWorkbench: React.FC<SystemConfigWorkbenchProps> = ({
         cancelLabel={t('common.cancel')}
         showCancel={showCancel}
         isDark={isDark}
-        actionsPrefix={quickWizardEnabled ? (
-          <button
-            type="button"
-            className={cn(
-              "px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg sm:rounded-xl border font-black uppercase tracking-wide transition-all inline-flex items-center gap-1.5 shadow-sm",
-              isDark 
-                ? "border-white/15 hover:bg-white/10 text-slate-300" 
-                : "border-slate-300 bg-white hover:bg-slate-50 text-slate-900"
-            )}
-            onClick={() => setIsQuickWizardOpen(true)}
-          >
-            <WandSparkles size={18} className="text-primary" />
-            {t('admin.config.quickWizard.title')}
-          </button>
-        ) : undefined}
+        actionsPrefix={quickWizardEnabled || onOpenAdminPassword ? actionButtons : undefined}
       />
 
       {reloadSummary && (
@@ -306,6 +332,7 @@ export const SystemConfigWorkbench: React.FC<SystemConfigWorkbenchProps> = ({
           {...(quickWizardLicense ? { licenseWizard: quickWizardLicense } : {})}
           {...(onResetAdminPassword ? { onResetAdminPassword } : {})}
           {...(typeof isResettingAdminPassword === 'boolean' ? { isResettingAdminPassword } : {})}
+          {...(adminPasswordPanelProps ? { adminPasswordPanelProps } : {})}
         />
       )}
     </div>

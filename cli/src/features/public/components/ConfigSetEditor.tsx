@@ -9,9 +9,13 @@ import {
   ConfigWorkbenchShell,
   AdminPasswordPanel,
   useToastStore,
+  useThemeStore,
+  useLanguageStore,
+  type Theme,
+  type Language,
 } from '@fileuni/shared';
 import { client, extractData, handleApiError } from '@/lib/api';
-import { CheckCircle, ShieldAlert } from 'lucide-react';
+import { CheckCircle, ShieldAlert, Languages, Sun, Moon, Monitor } from 'lucide-react';
 
 interface ConfigSetStatusResponse {
   is_config_set_mode: boolean;
@@ -31,6 +35,12 @@ interface ConfigNotesResponse {
 interface BackendCapabilitiesResponse {
   runtime_os?: string;
   is_config_set_mode?: boolean;
+}
+
+interface ConfigSetApplyResponse {
+  admin_username: string;
+  admin_action: string;
+  password_hint?: string | null;
 }
 
 type ConfigValidationError = {
@@ -64,6 +74,8 @@ const extractValidationErrorsFromException = (error: unknown): ConfigValidationE
 export const ConfigSetEditor: React.FC = () => {
   const { t } = useTranslation();
   const { addToast } = useToastStore();
+  const { theme, setTheme } = useThemeStore();
+  const { language, setLanguage } = useLanguageStore();
 
   const [permitted, setPermitted] = useState(false);
   const [permissionMessage, setPermissionMessage] = useState('');
@@ -79,7 +91,9 @@ export const ConfigSetEditor: React.FC = () => {
 
   const [showAdminPanel, setShowAdminPanel] = useState(false);
   const [adminUsername, setAdminUsername] = useState('admin');
-  const [applying, setApplying] = useState(false);
+  const [adminAction, setAdminAction] = useState<string>('existing_admin');
+  const [passwordHint, setPasswordHint] = useState<string | null>(null);
+  const [pendingAdminPassword, setPendingAdminPassword] = useState('');
   const [resettingAdminPassword, setResettingAdminPassword] = useState(false);
   const [completed, setCompleted] = useState(false);
   const [finishing, setFinishing] = useState(false);
@@ -202,35 +216,47 @@ export const ConfigSetEditor: React.FC = () => {
     }
   };
 
-  const handleApply = async (password: string) => {
-    const resolvedAdminUsername = 'admin';
-    setAdminUsername(resolvedAdminUsername);
-    setApplying(true);
+  const handleResetAdminPasswordOnly = async (password: string) => {
+    setResettingAdminPassword(true);
     try {
-      await extractData(
+      setPendingAdminPassword(password);
+      setShowAdminPanel(false);
+      return adminUsername;
+    } finally {
+      setResettingAdminPassword(false);
+    }
+  };
+
+  const handleApplyWithoutPassword = async () => {
+    if (testing) return;
+    setTesting(true);
+    setValidationErrors([]);
+    try {
+      const res = await extractData<ConfigSetApplyResponse>(
         client.POST('/api/v1/config-set/apply', {
           body: {
             config_path: configPath,
             toml_content: content,
-            admin_password: password,
+            admin_password: pendingAdminPassword,
           },
         })
       );
+      if (res?.admin_username) setAdminUsername(res.admin_username);
+      if (res?.admin_action) setAdminAction(res.admin_action);
+      setPasswordHint(res?.password_hint ?? null);
+      setPendingAdminPassword('');
       addToast(t('configSet.logs.success') || 'Configuration saved successfully', 'success');
       setCompleted(true);
-      return resolvedAdminUsername;
     } catch (e) {
       const errData = extractValidationErrorsFromException(e);
       if (errData.length > 0) {
         setValidationErrors(errData);
-        setShowAdminPanel(false);
         addToast(`${t('configSet.logs.failed')}: ${errData[0].message}`, 'error');
       } else {
         addToast(handleApiError(e, t), 'error');
       }
-      throw e;
     } finally {
-      setApplying(false);
+      setTesting(false);
     }
   };
 
@@ -240,35 +266,51 @@ export const ConfigSetEditor: React.FC = () => {
   };
 
   const handleQuickWizardResetAdminPassword = async (password: string) => {
-    const resolvedAdminUsername = 'admin';
     setResettingAdminPassword(true);
     try {
-      await extractData(
-        client.POST('/api/v1/config-set/apply', {
-          body: {
-            config_path: configPath,
-            toml_content: content,
-            admin_password: password,
-          },
-        })
-      );
-      setAdminUsername(resolvedAdminUsername);
-      setCompleted(true);
-      addToast(t('configSet.logs.success') || 'Configuration saved successfully', 'success');
-      return resolvedAdminUsername;
-    } catch (e) {
-      const errData = extractValidationErrorsFromException(e);
-      if (errData.length > 0) {
-        setValidationErrors(errData);
-        addToast(`${t('configSet.logs.failed')}: ${errData[0].message}`, 'error');
-      } else {
-        addToast(handleApiError(e, t), 'error');
-      }
-      throw e;
+      setPendingAdminPassword(password);
+      return adminUsername;
     } finally {
       setResettingAdminPassword(false);
     }
   };
+
+  const toggleTheme = () => {
+    const themes: Theme[] = ['light', 'dark', 'system'];
+    const currentIndex = themes.indexOf(theme);
+    const next = themes[(currentIndex + 1) % themes.length] ?? 'light';
+    setTheme(next);
+  };
+
+  const toggleLanguage = () => {
+    const langs: Language[] = ['zh', 'en'];
+    const currentLanguage: Language = language === 'auto' ? 'zh' : language;
+    const currentIndex = langs.indexOf(currentLanguage);
+    const next = langs[(currentIndex + 1) % langs.length] ?? 'zh';
+    setLanguage(next);
+  };
+
+  const ThemeIcon = theme === 'light' ? Sun : theme === 'dark' ? Moon : Monitor;
+  const headerActions = (
+    <div className="flex items-center gap-2">
+      <button
+        type="button"
+        onClick={toggleLanguage}
+        className="h-8 w-8 rounded-lg border inline-flex items-center justify-center transition-colors text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200 border-slate-200 dark:border-white/15 hover:bg-slate-100 dark:hover:bg-white/10"
+        title={t('launcher.switch_language')}
+      >
+        <Languages size={16} />
+      </button>
+      <button
+        type="button"
+        onClick={toggleTheme}
+        className="h-8 w-8 rounded-lg border inline-flex items-center justify-center transition-colors text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200 border-slate-200 dark:border-white/15 hover:bg-slate-100 dark:hover:bg-white/10"
+        title={t('launcher.toggle_theme')}
+      >
+        <ThemeIcon size={16} />
+      </button>
+    </div>
+  );
 
   const editorErrors: ConfigError[] = validationErrors.map((err) => ({
     message: err.message,
@@ -276,6 +318,16 @@ export const ConfigSetEditor: React.FC = () => {
     column: typeof err.column === 'number' ? err.column : 0,
     key: err.key,
   }));
+  const finalMessage =
+    (adminAction === 'created_default'
+      ? t('configSet.final.adminCreatedDefault', { user: adminUsername, password: passwordHint || 'admin888' })
+      : adminAction === 'created_with_password'
+        ? t('configSet.final.adminCreatedWithPassword', { user: adminUsername, password: passwordHint || '' })
+        : adminAction === 'reset_password'
+          ? t('configSet.final.adminReset', { user: adminUsername, password: passwordHint || '' })
+          : adminAction === 'existing_admin'
+            ? t('configSet.final.adminExisting', { user: adminUsername })
+            : '');
 
   if (!loading && !permitted) {
     return (
@@ -283,6 +335,7 @@ export const ConfigSetEditor: React.FC = () => {
         title={t('configSet.wizard.title')}
         subtitle={t('configSet.wizard.subtitle')}
         configPath={configPath}
+        headerActions={headerActions}
       >
         <div className="max-w-2xl mx-auto p-6 sm:p-8 bg-card border-2 border-destructive/20 rounded-3xl sm:rounded-[2.5rem] text-center shadow-2xl">
           <ShieldAlert size={80} className="mx-auto text-destructive mb-8" />
@@ -305,12 +358,13 @@ export const ConfigSetEditor: React.FC = () => {
         title={t('configSet.wizard.title')}
         subtitle={t('configSet.wizard.subtitle')}
         configPath={configPath}
+        headerActions={headerActions}
       >
         <div className="max-w-2xl mx-auto p-6 sm:p-8 bg-card border-2 border-emerald-500/20 rounded-3xl sm:rounded-[2.5rem] text-center shadow-2xl">
           <CheckCircle size={80} className="mx-auto text-emerald-500 mb-8" />
           <h2 className="text-4xl font-black mb-6">{t('configSet.final.title')}</h2>
           <p className="text-xl opacity-70 mb-10">
-            {t('configSet.final.subtitle', { user: adminUsername })}
+            {finalMessage || t('configSet.final.subtitle', { user: adminUsername })}
           </p>
           <div className="max-w-md mx-auto p-4 sm:p-5 bg-muted/50 rounded-xl text-left space-y-3 border border-border mb-8">
             <p className="text-sm font-semibold uppercase tracking-wide opacity-60">
@@ -342,16 +396,20 @@ export const ConfigSetEditor: React.FC = () => {
         title={t('configSet.wizard.title')}
         subtitle={t('configSet.wizard.subtitle')}
         configPath={configPath}
+        headerActions={headerActions}
       >
         <AdminPasswordPanel
           mode="panel"
-          showWarning={true}
+          showWarning={false}
           showRandomGenerator={true}
           minPasswordLength={8}
-          onConfirm={handleApply}
-          loading={applying}
+          onConfirm={handleResetAdminPasswordOnly}
+          loading={resettingAdminPassword}
           onClose={() => setShowAdminPanel(false)}
-          confirmLabel={t('configSet.admin.finish')}
+          confirmLabel={t('configSet.admin.changePassword')}
+          showSuccess={false}
+          showResetHint={false}
+          pendingHint={t('configSet.admin.pendingHint')}
         />
       </ConfigWorkbenchShell>
     );
@@ -362,6 +420,7 @@ export const ConfigSetEditor: React.FC = () => {
       title={t('configSet.wizard.title')}
       subtitle={t('configSet.wizard.subtitle')}
       configPath={configPath}
+      headerActions={headerActions}
     >
       <SystemConfigWorkbench
         tomlAdapter={toml}
@@ -374,7 +433,7 @@ export const ConfigSetEditor: React.FC = () => {
         busy={testing}
         onChange={setContent}
         onTest={handleTest}
-        onSave={() => setShowAdminPanel(true)}
+        onSave={handleApplyWithoutPassword}
         onCancel={handleResetToSaved}
         showCancel={false}
         allowSaveWithoutChanges={true}
@@ -383,8 +442,17 @@ export const ConfigSetEditor: React.FC = () => {
         restartNotice={t('admin.config.restartNotice')}
         quickWizardEnabled={true}
         runtimeOs={runtimeOs}
+        onOpenAdminPassword={() => setShowAdminPanel(true)}
+        adminPasswordLabel={t('configSet.admin.changePassword')}
         onResetAdminPassword={handleQuickWizardResetAdminPassword}
         isResettingAdminPassword={resettingAdminPassword}
+        adminPasswordPanelProps={{
+          showWarning: false,
+          showSuccess: false,
+          showResetHint: false,
+          confirmLabel: t('configSet.admin.changePassword'),
+          pendingHint: t('configSet.admin.pendingHint'),
+        }}
       />
     </ConfigWorkbenchShell>
   );

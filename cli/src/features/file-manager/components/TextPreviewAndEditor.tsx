@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import Editor from '@monaco-editor/react';
+import { MonacoEditor } from '@fileuni/shared';
 import { client, BASE_URL } from '@/lib/api.ts';
 import { 
   Loader2, Save, Edit3, Eye
@@ -156,7 +156,7 @@ export const TextPreviewAndEditor = ({ path, isDark, headerExtra, onClose }: Pro
             <p className="text-sm font-black uppercase tracking-[0.3em]">Opening {fileName}...</p>
           </div>
         ) : (
-          <Editor
+          <MonacoEditor
             height="100%"
             language={language}
             value={content}
