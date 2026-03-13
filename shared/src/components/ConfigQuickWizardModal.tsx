@@ -1664,7 +1664,12 @@ export const ConfigQuickWizardModal: React.FC<ConfigQuickWizardModalProps> = ({
     ];
   }, [currentPreset.features, draft.captchaPreheatMode, draft.performanceTier, previewTuningPlan, t]);
 
-  const parsed = useMemo(() => parseConfig(content, tomlAdapter.parse), [content, tomlAdapter]);
+  const parsed = useMemo(() => {
+    if (!isOpen) {
+      return { value: null, error: null };
+    }
+    return parseConfig(content, tomlAdapter.parse);
+  }, [content, isOpen, tomlAdapter]);
 
   const initializeFromParsed = useCallback(() => {
     if (parsed.value) {

@@ -1,8 +1,6 @@
 /// <reference path="../types/vite-worker.d.ts" />
 
 import { useEffect, useState } from "react";
-import { loader } from "@monaco-editor/react";
-import editorWorker from "monaco-editor/esm/vs/editor/editor.worker?worker";
 
 interface MonacoWindow extends Window {
   MonacoEnvironment?: {
@@ -14,23 +12,44 @@ type MonacoModule = typeof import("monaco-editor");
 
 let monacoReadyPromise: Promise<MonacoModule> | null = null;
 
-export const ensureMonacoReady = (): Promise<MonacoModule> => {
+const isMobileUserAgent = (): boolean => {
+  if (typeof navigator === "undefined") {
+    return false;
+  }
+  return /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+};
+
+export const isMonacoSupported = (): boolean => {
   if (typeof window === "undefined") {
-    return Promise.reject(new Error("Monaco requires a browser environment"));
+    return false;
+  }
+  if (isMobileUserAgent()) {
+    return false;
+  }
+  return typeof window.Worker !== "undefined";
+};
+
+export const ensureMonacoReady = (): Promise<MonacoModule> => {
+  if (!isMonacoSupported()) {
+    return Promise.reject(new Error("Monaco is disabled in the current runtime"));
   }
   if (monacoReadyPromise) {
     return monacoReadyPromise;
   }
   monacoReadyPromise = (async () => {
+    const [{ loader }, { default: EditorWorker }] = await Promise.all([
+      import("@monaco-editor/react"),
+      import("monaco-editor/esm/vs/editor/editor.worker?worker"),
+    ]);
+    const monacoInstance: MonacoModule = await import("monaco-editor");
     const monacoWindow = window as MonacoWindow;
     if (!monacoWindow.MonacoEnvironment) {
       monacoWindow.MonacoEnvironment = {
         getWorker: function (_moduleId: string, _label: string) {
-          return new editorWorker();
+          return new EditorWorker();
         },
       };
     }
-    const monacoInstance: MonacoModule = await import("monaco-editor");
     loader.config({ monaco: monacoInstance });
     await loader.init();
     return monacoInstance;
@@ -42,6 +61,10 @@ export const useMonacoReady = () => {
   const [status, setStatus] = useState<"pending" | "ready" | "failed">("pending");
 
   useEffect(() => {
+    if (!isMonacoSupported()) {
+      setStatus("failed");
+      return undefined;
+    }
     let cancelled = false;
     ensureMonacoReady()
       .then(() => {

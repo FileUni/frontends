@@ -1,6 +1,6 @@
-import React, { useMemo, useRef, useState, useEffect } from "react";
+import React, { useMemo, useRef, useState, useEffect, Suspense } from "react";
 import { useTranslation } from "react-i18next";
-import Editor, { type OnMount } from "@monaco-editor/react";
+import type { OnMount } from "@monaco-editor/react";
 import type { editor as MonacoEditor } from "monaco-editor";
 import { AlertTriangle } from "lucide-react";
 import { Button } from "./ui/Button";
@@ -39,6 +39,11 @@ interface ConfigRawEditorProps {
 }
 
 type MonacoModule = typeof import("monaco-editor");
+
+const LazyMonacoEditor = React.lazy(async () => {
+  const mod = await import("@monaco-editor/react");
+  return { default: mod.default };
+});
 
 /**
  * Robust line number lookup
@@ -162,7 +167,8 @@ export const ConfigRawEditor: React.FC<ConfigRawEditorProps> = ({
   const [internalActivePath, setInternalActivePath] = useState("");
   const decorationCollectionRef = useRef<MonacoEditor.IEditorDecorationsCollection | null>(null);
   const monacoStatus = useMonacoReady();
-  const useFallbackEditor = monacoStatus === "failed";
+  const [forceFallbackEditor, setForceFallbackEditor] = useState(false);
+  const useFallbackEditor = forceFallbackEditor || monacoStatus === "failed";
   const resolvedHeight = height === "100%" ? "clamp(360px, 62vh, 900px)" : height;
 
   const activePath = externalActivePath || internalActivePath;
@@ -233,24 +239,29 @@ export const ConfigRawEditor: React.FC<ConfigRawEditorProps> = ({
   }, [externalActivePath, content]);
 
   const handleEditorMount: OnMount = (editor, monaco) => {
-    editorRef.current = editor;
-    monacoRef.current = monaco;
-    setUseFallbackEditor(false);
-    const languageId = registerTomlLanguage(monaco);
-    const model = editor.getModel();
-    if (model) {
-      monaco.editor.setModelLanguage(model, languageId);
+    try {
+      editorRef.current = editor;
+      monacoRef.current = monaco;
+      setForceFallbackEditor(false);
+      const languageId = registerTomlLanguage(monaco);
+      const model = editor.getModel();
+      if (model) {
+        monaco.editor.setModelLanguage(model, languageId);
+      }
+
+      setTimeout(() => {
+        editor.layout();
+      }, 100);
+
+      editor.onDidChangeCursorPosition((evt) => {
+        const value = editor.getValue();
+        const path = resolveActivePath(value, evt.position.lineNumber);
+        setInternalActivePath(path);
+      });
+    } catch (error) {
+      console.error("Monaco editor mount failed, falling back to textarea:", error);
+      setForceFallbackEditor(true);
     }
-
-    setTimeout(() => {
-      editor.layout();
-    }, 100);
-
-    editor.onDidChangeCursorPosition((evt) => {
-      const value = editor.getValue();
-      const path = resolveActivePath(value, evt.position.lineNumber);
-      setInternalActivePath(path);
-    });
   };
 
   return (
@@ -385,37 +396,48 @@ export const ConfigRawEditor: React.FC<ConfigRawEditorProps> = ({
             {t("admin.config.loading")}
           </div>
         ) : (
-          <Editor
-            height="100%"
-            width="100%"
-            language="toml-config"
-            theme={isDark ? "vs-dark" : "vs"}
-            value={content}
-            onChange={(v) => {
-              if (typeof v === "string") {
-                onChange(v);
-              }
-            }}
-            onMount={handleEditorMount}
-            options={{
-              minimap: { enabled: false },
-              fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
-              fontSize: 14,
-              lineNumbers: "on",
-              lineNumbersMinChars: 3,
-              renderLineHighlight: "all",
-              scrollBeyondLastLine: false,
-              wordWrap: "on",
-              automaticLayout: true,
-              padding: { top: 16, bottom: 16 },
-              scrollbar: {
-                vertical: "visible",
-                horizontal: "visible",
-                verticalScrollbarSize: 10,
-                horizontalScrollbarSize: 10,
-              },
-            }}
-          />
+          <Suspense
+            fallback={(
+              <div className={cn(
+                "h-full w-full flex items-center justify-center text-lg font-black",
+                isDark ? "text-slate-300" : "text-slate-600"
+              )}>
+                {t("admin.config.loading")}
+              </div>
+            )}
+          >
+            <LazyMonacoEditor
+              height="100%"
+              width="100%"
+              language="toml-config"
+              theme={isDark ? "vs-dark" : "vs"}
+              value={content}
+              onChange={(v) => {
+                if (typeof v === "string") {
+                  onChange(v);
+                }
+              }}
+              onMount={handleEditorMount}
+              options={{
+                minimap: { enabled: false },
+                fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
+                fontSize: 14,
+                lineNumbers: "on",
+                lineNumbersMinChars: 3,
+                renderLineHighlight: "all",
+                scrollBeyondLastLine: false,
+                wordWrap: "on",
+                automaticLayout: true,
+                padding: { top: 16, bottom: 16 },
+                scrollbar: {
+                  vertical: "visible",
+                  horizontal: "visible",
+                  verticalScrollbarSize: 10,
+                  horizontalScrollbarSize: 10,
+                },
+              }}
+            />
+          </Suspense>
         )}
       </div>
     </div>
