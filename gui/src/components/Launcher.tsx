@@ -805,7 +805,7 @@ export default function Launcher() {
     return (
       <>
         <div className="fixed inset-0 bg-gradient-to-br from-slate-50 via-slate-100 to-slate-200 dark:from-[#020817] dark:via-[#0a0f1d] dark:to-[#0f172a] text-slate-900 dark:text-[#f8fafc] flex flex-col overflow-hidden">
-          <div className="flex items-center justify-between p-6 sm:p-8 border-b border-slate-200/50 dark:border-slate-800/40 bg-white/50 dark:bg-slate-900/50 backdrop-blur-md">
+          <div className="flex items-center justify-between px-6 pb-6 pt-[calc(1.5rem+var(--safe-area-top))] sm:px-8 sm:pb-8 sm:pt-[calc(2rem+var(--safe-area-top))] border-b border-slate-200/50 dark:border-slate-800/40 bg-white/50 dark:bg-slate-900/50 backdrop-blur-md">
             <div>
               <h1 className="text-xl sm:text-2xl font-black tracking-tight">
                 {t('setup.wizard.title')}
@@ -950,7 +950,7 @@ export default function Launcher() {
       <div className="w-full h-full bg-white/80 dark:bg-[#0f172a]/90 backdrop-blur-xl border-0 sm:border-0 shadow-none relative flex flex-col overflow-hidden">
 
         {/* Glassmorphism header */}
-        <div className="flex items-center justify-between p-6 sm:p-8 border-b border-slate-200/50 dark:border-slate-800/40 bg-white/50 dark:bg-slate-900/50 backdrop-blur-md">
+        <div className="flex items-center justify-between px-6 pb-6 pt-[calc(1.5rem+var(--safe-area-top))] sm:px-8 sm:pb-8 sm:pt-[calc(2rem+var(--safe-area-top))] border-b border-slate-200/50 dark:border-slate-800/40 bg-white/50 dark:bg-slate-900/50 backdrop-blur-md">
           <div className="flex items-center gap-5">
             <div className="relative group">
               <img src="/favicon.svg" alt="FileUni Logo" width={56} height={56} className="shadow-xl shadow-cyan-500/20 shrink-0 transform group-hover:scale-110 transition-all duration-500 ease-out" />
@@ -1130,7 +1130,7 @@ export default function Launcher() {
          </div>
 
           {/* Footer */}
-          <div className="flex justify-center items-center py-6 border-t border-slate-200/50 dark:border-slate-800/40 bg-slate-50/50 dark:bg-slate-900/30">
+          <div className="flex justify-center items-center pt-6 pb-[calc(1.5rem+var(--safe-area-bottom))] border-t border-slate-200/50 dark:border-slate-800/40 bg-slate-50/50 dark:bg-slate-900/30">
             <div className="flex items-center gap-8 text-sm text-slate-400 dark:text-slate-500 font-bold tracking-widest uppercase opacity-70">
               <span className="flex items-center gap-2.5">
                 <span className="w-2 h-2 rounded-full bg-blue-500 shadow-sm shadow-blue-500/50" />
