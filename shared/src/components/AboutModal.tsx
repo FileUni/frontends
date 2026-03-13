@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import {
   BookOpen,
   Calendar,
@@ -216,14 +216,9 @@ export const AboutModal: React.FC<AboutModalProps> = ({
 }) => {
   const { t } = useTranslation();
   const resolvedTheme = useResolvedTheme();
-  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen) return undefined;
     const onKeyDown = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
@@ -297,9 +292,27 @@ export const AboutModal: React.FC<AboutModalProps> = ({
         <div className={cn("flex-1 space-y-8 px-8 pb-8 pt-8", isDark ? "bg-slate-950" : "bg-white")}>
           {/* Links Grid: Adaptive Cards */}
           <div className="grid grid-cols-3 gap-3">
-            <LinkCard href={PROJECT_HOMEPAGE_URL} label={t('about.links.website')} icon={Globe} onOpenLink={onOpenLink} isDark={isDark} />
-            <LinkCard href={PROJECT_DOCS_URL} label={t('about.links.docs')} icon={BookOpen} onOpenLink={onOpenLink} isDark={isDark} />
-            <LinkCard href={PROJECT_REPOSITORY_URL} label="GitHub" icon={Github} onOpenLink={onOpenLink} isDark={isDark} />
+            <LinkCard
+              href={PROJECT_HOMEPAGE_URL}
+              label={t('about.links.website')}
+              icon={Globe}
+              isDark={isDark}
+              {...(onOpenLink ? { onOpenLink } : {})}
+            />
+            <LinkCard
+              href={PROJECT_DOCS_URL}
+              label={t('about.links.docs')}
+              icon={BookOpen}
+              isDark={isDark}
+              {...(onOpenLink ? { onOpenLink } : {})}
+            />
+            <LinkCard
+              href={PROJECT_REPOSITORY_URL}
+              label="GitHub"
+              icon={Github}
+              isDark={isDark}
+              {...(onOpenLink ? { onOpenLink } : {})}
+            />
           </div>
 
           {/* Update Section */}
@@ -318,7 +331,7 @@ export const AboutModal: React.FC<AboutModalProps> = ({
                 {onCheckUpdates && (
                   <Button
                     size="sm"
-                    variant={isDark ? "secondary" : "outline"}
+                    variant={isDark ? "ghost" : "outline"}
                     onClick={() => void onCheckUpdates()}
                     disabled={isCheckingUpdates}
                     className="h-8 gap-2 rounded-lg text-[11px] font-black uppercase tracking-wider shadow-sm"
@@ -354,8 +367,8 @@ export const AboutModal: React.FC<AboutModalProps> = ({
                         info={updateInfo.stable} 
                         updateInfo={updateInfo}
                         title={t('about.channels.stable')} 
-                        onOpenLink={onOpenLink}
-                        getUpdateGuideUrl={getUpdateGuideUrl}
+                        {...(onOpenLink ? { onOpenLink } : {})}
+                        {...(getUpdateGuideUrl ? { getUpdateGuideUrl } : {})}
                         t={t}
                         isDark={isDark}
                       />
@@ -365,8 +378,8 @@ export const AboutModal: React.FC<AboutModalProps> = ({
                         info={updateInfo.prerelease} 
                         updateInfo={updateInfo}
                         title={t('about.channels.prerelease')} 
-                        onOpenLink={onOpenLink}
-                        getUpdateGuideUrl={getUpdateGuideUrl}
+                        {...(onOpenLink ? { onOpenLink } : {})}
+                        {...(getUpdateGuideUrl ? { getUpdateGuideUrl } : {})}
                         t={t}
                         isDark={isDark}
                       />

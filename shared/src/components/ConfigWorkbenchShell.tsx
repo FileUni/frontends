@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { X } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useResolvedTheme } from '../lib/theme';
@@ -27,11 +27,6 @@ export const ConfigWorkbenchShell: React.FC<ConfigWorkbenchShellProps> = ({
   children,
 }) => {
   const resolvedTheme = useResolvedTheme();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   const isDark = resolvedTheme === 'dark';
 

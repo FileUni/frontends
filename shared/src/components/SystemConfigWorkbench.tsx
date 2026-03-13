@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AlertTriangle, WandSparkles } from 'lucide-react';
 import { ConfigEditorPanel } from './ConfigEditorPanel';
@@ -99,12 +99,7 @@ export const SystemConfigWorkbench: React.FC<SystemConfigWorkbenchProps> = ({
 }) => {
   const { t } = useTranslation();
   const [isQuickWizardOpen, setIsQuickWizardOpen] = useState(false);
-  const [mounted, setMounted] = useState(false);
   const resolvedTheme = useResolvedTheme();
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   const isDark = resolvedTheme === 'dark';
 

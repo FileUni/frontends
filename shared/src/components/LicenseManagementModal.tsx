@@ -1,11 +1,12 @@
 //  License Management Modal
 //  Standalone modal for viewing license status and applying license keys.
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { X, Shield, Users, Fingerprint, Key, Loader2 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useResolvedTheme } from '../lib/theme';
+import { Button } from './ui/Button';
 
 export interface LicenseManagementModalProps {
   isOpen: boolean;
@@ -33,16 +34,9 @@ export const LicenseManagementModal: React.FC<LicenseManagementModalProps> = ({
   saving,
   onLicenseKeyChange,
   onApplyLicense,
-  expiresAt,
-  features,
 }) => {
   const { t } = useTranslation();
   const resolvedTheme = useResolvedTheme();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   const isDark = resolvedTheme === 'dark';
 

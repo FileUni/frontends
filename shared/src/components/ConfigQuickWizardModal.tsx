@@ -1319,17 +1319,12 @@ export const ConfigQuickWizardModal: React.FC<ConfigQuickWizardModalProps> = ({
   const [showDetailedPreview, setShowDetailedPreview] = useState(false);
   const [showAdminPasswordPanel, setShowAdminPasswordPanel] = useState(false);
   const [isLicenseModalOpen, setIsLicenseModalOpen] = useState(false);
-  const [mounted, setMounted] = useState(false);
   const resolvedTheme = useResolvedTheme();
 
   const draftRef = useRef<FriendlyDraft>(defaultDraft);
   const hasInitializedRef = useRef(false);
   const isInternalSyncRef = useRef(false);
   const lastObservedContentRef = useRef(content);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   const isDark = resolvedTheme === 'dark';
 
