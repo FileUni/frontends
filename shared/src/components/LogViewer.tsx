@@ -170,16 +170,16 @@ export const LogViewer = ({
       className
     )}>
       <div className={cn(
-        "flex items-center justify-between px-5 py-3 border-b",
+        "flex items-center justify-between gap-3 px-3 sm:px-5 py-3 border-b",
         isDark ? "bg-gradient-to-r from-slate-900/90 to-slate-800/60 border-slate-800/60" : "bg-slate-50 border-slate-200"
       )}>
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-500/20">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="w-9 h-9 shrink-0 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-500/20">
             <Terminal size={18} className="text-white" />
           </div>
-          <div>
-            <h3 className={cn("text-sm font-bold", isDark ? "text-slate-100" : "text-slate-900")}>{title}</h3>
-            <div className="flex items-center gap-2 text-sm font-medium">
+          <div className="min-w-0">
+            <h3 className={cn("text-sm font-bold truncate", isDark ? "text-slate-100" : "text-slate-900")}>{title}</h3>
+            <div className="hidden sm:flex items-center gap-2 text-sm font-medium">
               <span className={isDark ? "text-slate-500" : "text-slate-500"}>{logs.length} entries</span>
               {logs.length > 0 && (
                 <>
@@ -193,7 +193,7 @@ export const LogViewer = ({
           </div>
         </div>
 
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-1.5 shrink-0">
           <button onClick={() => setShowSearch(!showSearch)} className={cn("p-2 rounded-lg transition-all", 
             showSearch ? (isDark ? 'bg-cyan-500/20 text-cyan-400' : 'bg-cyan-100 text-cyan-700') : (isDark ? 'hover:bg-slate-800 text-slate-400 hover:text-slate-200' : 'hover:bg-slate-100 text-slate-500 hover:text-slate-800'))}>
             <Search size={18} />
@@ -275,27 +275,64 @@ export const LogViewer = ({
             <span className="text-sm font-medium">{searchQuery ? 'No matching logs' : 'No logs yet'}</span>
           </div>
         ) : (
-          <div className="p-3 space-y-0.5">
+          <div className="p-2 sm:p-3 space-y-1">
             {filteredLogs.map((log) => {
               const config = LEVEL_CONFIG[log.level];
               return (
-                <div key={log.id} className={cn("group flex items-start gap-2.5 py-1 px-2.5 rounded transition-colors", isDark ? "hover:bg-white/5" : "hover:bg-slate-100")}>
-                  <span className={cn("shrink-0 select-none font-medium", isDark ? "text-slate-600" : "text-slate-400")}>{formatTime(log.timestamp)}</span>
-                  <span className={cn(
-                    "shrink-0 px-1.5 py-0 rounded text-sm font-black tracking-tighter min-w-[44px] text-center border",
-                    config.bgColor, config.color, config.borderColor
-                  )}>
-                    {log.level}
-                  </span>
-                  {log.source && <span className="text-cyan-600 dark:text-cyan-400/80 shrink-0 max-w-[100px] truncate font-bold">[{log.source}]</span>}
-                  <span className={cn(
-                    "break-all font-medium",
-                    log.level === 'ERROR' ? 'text-rose-600 dark:text-rose-300' : 
-                    log.level === 'WARN' ? 'text-amber-600 dark:text-amber-300' : 
-                    isDark ? 'text-slate-300' : 'text-slate-800'
-                  )}>
+                <div
+                  key={log.id}
+                  className={cn(
+                    "group rounded transition-colors px-2.5 py-2 sm:py-1.5",
+                    isDark ? "hover:bg-white/5" : "hover:bg-slate-100"
+                  )}
+                >
+                  <div className="flex flex-wrap items-start gap-x-2.5 gap-y-1">
+                    <span
+                      className={cn(
+                        "shrink-0 select-none font-medium text-[11px] sm:text-sm",
+                        isDark ? "text-slate-600" : "text-slate-400"
+                      )}
+                    >
+                      {formatTime(log.timestamp)}
+                    </span>
+                    <span
+                      className={cn(
+                        "shrink-0 px-1.5 py-0 rounded text-[11px] sm:text-sm font-black tracking-tighter min-w-[44px] text-center border",
+                        config.bgColor,
+                        config.color,
+                        config.borderColor
+                      )}
+                    >
+                      {log.level}
+                    </span>
+                    {log.source && (
+                      <span className="shrink-0 text-cyan-600 dark:text-cyan-400/80 max-w-[120px] truncate font-bold text-[11px] sm:text-sm">
+                        [{log.source}]
+                      </span>
+                    )}
+
+                    <span
+                      className={cn(
+                        "max-[420px]:hidden flex-1 min-w-0 whitespace-pre-wrap break-words font-medium",
+                        log.level === 'ERROR' ? 'text-rose-600 dark:text-rose-300' :
+                        log.level === 'WARN' ? 'text-amber-600 dark:text-amber-300' :
+                        isDark ? 'text-slate-300' : 'text-slate-800'
+                      )}
+                    >
+                      {log.message}
+                    </span>
+                  </div>
+
+                  <div
+                    className={cn(
+                      "hidden max-[420px]:block mt-1 whitespace-pre-wrap break-words font-medium",
+                      log.level === 'ERROR' ? 'text-rose-600 dark:text-rose-300' :
+                      log.level === 'WARN' ? 'text-amber-600 dark:text-amber-300' :
+                      isDark ? 'text-slate-300' : 'text-slate-800'
+                    )}
+                  >
                     {log.message}
-                  </span>
+                  </div>
                 </div>
               );
             })}
