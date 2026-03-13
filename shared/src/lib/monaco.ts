@@ -19,11 +19,34 @@ const isMobileUserAgent = (): boolean => {
   return /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
 };
 
+const isLowMemoryDevice = (): boolean => {
+  if (typeof navigator === "undefined") {
+    return false;
+  }
+
+  // `deviceMemory` is supported in Chromium-based browsers (including Android WebView).
+  // When missing, fall back to a conservative heuristic.
+  const nav = navigator as Navigator & { deviceMemory?: number };
+  const deviceMemory = typeof nav.deviceMemory === "number" ? nav.deviceMemory : undefined;
+  const cores = typeof navigator.hardwareConcurrency === "number" ? navigator.hardwareConcurrency : undefined;
+
+  if (typeof deviceMemory === "number") {
+    return deviceMemory <= 2;
+  }
+  if (typeof cores === "number") {
+    return cores <= 2;
+  }
+  return false;
+};
+
 export const isMonacoSupported = (): boolean => {
   if (typeof window === "undefined") {
     return false;
   }
   if (isMobileUserAgent()) {
+    return false;
+  }
+  if (isLowMemoryDevice()) {
     return false;
   }
   return typeof window.Worker !== "undefined";
