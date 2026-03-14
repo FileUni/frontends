@@ -7,16 +7,48 @@ import {
   Database, Activity, ShieldAlert, RefreshCw, 
   Unlock, HardDrive, Cpu, AlertTriangle, Users
 } from 'lucide-react';
-import { client } from '@/lib/api.ts';
-import type { components } from '@/types/api.ts';
+import { client, extractData } from '@/lib/api.ts';
 
-type StorageStats = components["schemas"]["StorageStatsResponse"];
+type AdminStorageStats = {
+  total_users: number;
+  total_used: number;
+  total_quota: number;
+};
+
+type MaintenanceStatus = {
+  locked_users: string[];
+  is_global_maintenance: boolean;
+};
+
+const isRecord = (value: unknown): value is Record<string, unknown> => {
+  return typeof value === 'object' && value !== null;
+};
+
+const isAdminStorageStats = (value: unknown): value is AdminStorageStats => {
+  if (!isRecord(value)) return false;
+  return (
+    typeof value.total_users === 'number' &&
+    Number.isFinite(value.total_users) &&
+    typeof value.total_used === 'number' &&
+    Number.isFinite(value.total_used) &&
+    typeof value.total_quota === 'number' &&
+    Number.isFinite(value.total_quota)
+  );
+};
+
+const isMaintenanceStatus = (value: unknown): value is MaintenanceStatus => {
+  if (!isRecord(value)) return false;
+  if (typeof value.is_global_maintenance !== 'boolean') return false;
+  if (!Array.isArray(value.locked_users)) return false;
+  return value.locked_users.every((u) => typeof u === 'string');
+};
 
 export const FileSystemAdmin = () => {
   const { t } = useTranslation();
   const { addToast } = useToastStore();
   const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState<StorageStats | null>(null);
+  const [stats, setStats] = useState<AdminStorageStats | null>(null);
+  const [maintenanceStatus, setMaintenanceStatus] = useState<MaintenanceStatus | null>(null);
   const [lockedUsers, setLockedUsers] = useState<string[]>([]);
   const [syncing, setSyncing] = useState(false);
   const [unlocking, setUnlocking] = useState(false);
@@ -27,14 +59,26 @@ export const FileSystemAdmin = () => {
 
   const fetchData = async () => {
     try {
-      const { data: res } = await client.GET('/api/v1/file/admin/storage-stats');
-      if (res?.success && res.data) setStats(res.data);
+      const [statsRes, maintenanceRes] = await Promise.allSettled([
+        extractData<unknown>(client.GET('/api/v1/file/admin/storage-stats')),
+        extractData<unknown>(client.GET('/api/v1/file/admin/maintenance/status')),
+      ]);
 
-      const { data: userRes } = await client.GET('/api/v1/file/admin/user-dirs');
-      if (userRes?.success) {
-        // Filter users who are in maintenance mode (locked)
-        // This is a placeholder until backend provides a specific locked list endpoint
-        setLockedUsers([]); 
+      if (statsRes.status === 'fulfilled' && isAdminStorageStats(statsRes.value)) {
+        setStats(statsRes.value);
+      } else {
+        setStats(null);
+      }
+
+      if (
+        maintenanceRes.status === 'fulfilled' &&
+        isMaintenanceStatus(maintenanceRes.value)
+      ) {
+        setMaintenanceStatus(maintenanceRes.value);
+        setLockedUsers(maintenanceRes.value.locked_users);
+      } else {
+        setMaintenanceStatus(null);
+        setLockedUsers([]);
       }
     } catch (e) { console.error(e); }
     finally { setLoading(false); }
@@ -74,6 +118,11 @@ export const FileSystemAdmin = () => {
 
   if (loading) return <div className="h-64 flex items-center justify-center font-black animate-pulse opacity-50 uppercase tracking-widest">{t('admin.loading')}</div>;
 
+  const totalUsed = stats?.total_used ?? 0;
+  const totalQuota = stats?.total_quota ?? 0;
+  const quotaPct = totalQuota > 0 ? Math.min(100, (totalUsed / totalQuota) * 100) : null;
+  const isGlobalMaintenance = maintenanceStatus?.is_global_maintenance === true;
+
   return (
     <div className="space-y-10">
       {/* Overview Cards */}
@@ -81,24 +130,33 @@ export const FileSystemAdmin = () => {
         <div className="bg-white/[0.03] border border-white/5 rounded-[2.5rem] p-8 shadow-xl relative overflow-hidden group">
           <Database className="absolute -right-4 -bottom-4 w-32 h-32 opacity-5 -rotate-12 group-hover:scale-110 transition-transform" />
           <p className="text-sm font-black uppercase tracking-widest opacity-40 mb-1">{t('admin.fs.cluster_storage')}</p>
-          <h3 className="text-3xl font-black">{formatSize(stats?.used || 0)}</h3>
-          <p className="text-sm font-bold mt-4 text-primary uppercase tracking-widest">{t('admin.fs.active_maintenance')}</p>
+          <h3 className="text-3xl font-black">{formatSize(totalUsed)}</h3>
+          <p className="text-sm font-bold mt-4 text-primary uppercase tracking-widest">
+            {t('admin.fs.system_status')}: {isGlobalMaintenance ? t('common.on') : t('common.off')}
+          </p>
         </div>
 
         <div className="bg-white/[0.03] border border-white/5 rounded-[2.5rem] p-8 shadow-xl relative overflow-hidden group">
           <Activity className="absolute -right-4 -bottom-4 w-32 h-32 opacity-5 group-hover:scale-110 transition-transform" />
           <p className="text-sm font-black uppercase tracking-widest opacity-40 mb-1">{t('admin.fs.usage_efficiency')}</p>
-          <h3 className="text-3xl font-black">94.2%</h3>
+          <h3 className="text-3xl font-black">
+            {quotaPct === null ? 'N/A' : `${quotaPct.toFixed(1)}%`}
+          </h3>
           <div className="mt-4 h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
-            <div className="h-full bg-green-500 w-[94.2%]" />
+            <div
+              className="h-full bg-green-500"
+              style={{ width: `${quotaPct ?? 0}%` }}
+            />
           </div>
         </div>
 
         <div className="bg-white/[0.03] border border-white/5 rounded-[2.5rem] p-8 shadow-xl relative overflow-hidden group">
           <Cpu className="absolute -right-4 -bottom-4 w-32 h-32 opacity-5 group-hover:scale-110 transition-transform" />
-          <p className="text-sm font-black uppercase tracking-widest opacity-40 mb-1">{t('admin.fs.storage_types')}</p>
-          <h3 className="text-3xl font-black">{t('admin.fs.hybridStorage')}</h3>
-          <p className="text-sm font-bold mt-4 opacity-40 uppercase tracking-widest">{t('admin.fs.engine_distribution')}</p>
+          <p className="text-sm font-black uppercase tracking-widest opacity-40 mb-1">{t('admin.users.title') || 'Users'}</p>
+          <h3 className="text-3xl font-black tabular-nums">{stats?.total_users ?? 0}</h3>
+          <p className="text-sm font-bold mt-4 opacity-40 uppercase tracking-widest">
+            {t('admin.fs.locked_users')}: {lockedUsers.length}
+          </p>
         </div>
       </div>
 

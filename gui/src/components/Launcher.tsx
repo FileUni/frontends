@@ -6,8 +6,6 @@ import {
   Moon,
   Monitor,
   Languages,
-  Activity,
-  Cpu,
   Zap,
   FileText,
   Info,
@@ -114,7 +112,6 @@ export default function Launcher() {
   // Log related state
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [uptime, setUptime] = useState(0);
-  const stats = { cpu: 12, memory: 128, connections: 5 };
 
   // Config selector state
   const [showConfigSelector, setShowConfigSelector] = useState(false);
@@ -964,15 +961,7 @@ export default function Launcher() {
           <div className="flex items-center gap-3">
             {/* Stats */}
             {status === 'Running' && (
-              <div className="hidden lg:flex items-center gap-4 mr-6 px-5 py-2.5 bg-slate-100/80 dark:bg-slate-800/40 rounded-2xl text-sm font-bold border border-slate-200/50 dark:border-slate-700/50 shadow-inner">
-                <span className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
-                  <Cpu size={14} className="text-blue-500" /> {stats.cpu}%
-                </span>
-                <span className="w-px h-3 bg-slate-300 dark:bg-slate-700" />
-                <span className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
-                  <Activity size={14} className="text-emerald-500" /> {stats.connections}
-                </span>
-                <span className="w-px h-3 bg-slate-300 dark:bg-slate-700" />
+              <div className="hidden lg:flex items-center mr-6 px-5 py-2.5 bg-slate-100/80 dark:bg-slate-800/40 rounded-2xl text-sm font-bold border border-slate-200/50 dark:border-slate-700/50 shadow-inner">
                 <span className="flex items-center gap-2 text-slate-600 dark:text-slate-300 font-mono">
                   <Zap size={14} className="text-amber-500" /> {formatUptime(uptime)}
                 </span>
