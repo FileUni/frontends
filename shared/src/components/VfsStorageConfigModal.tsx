@@ -224,11 +224,15 @@ const parseVfsDraftFromContent = (
         .filter(isRecord)
         .map((conn) => {
           const driver: VfsDriver = (typeof conn.driver === 'string' ? conn.driver : 'fs') as VfsDriver;
+          const rawRoot = typeof conn.root === 'string' ? conn.root : '';
+          const root = (driver === 's3' || driver === 'webdav') && rawRoot.trim().length === 0
+            ? '/'
+            : rawRoot;
           return {
             id: makeId('connector'),
             name: typeof conn.name === 'string' ? conn.name : '',
             driver,
-            root: typeof conn.root === 'string' ? conn.root : '',
+            root,
             enable: typeof conn.enable === 'boolean' ? conn.enable : true,
             options: normalizeOptionsForDriver(driver, kvFromOptions(conn.options)),
           };
@@ -840,6 +844,11 @@ export const VfsStorageConfigModal: React.FC<VfsStorageConfigModalProps> = ({
                           updateConnector(c.id, (prev) => ({
                             ...prev,
                             driver: nextDriver,
+                            root: (nextDriver === 's3' || nextDriver === 'webdav')
+                              ? (prev.driver === 's3' || prev.driver === 'webdav'
+                                ? prev.root
+                                : '/')
+                              : prev.root,
                             options: normalizeOptionsForDriver(nextDriver, prev.options),
                           }));
                         }}
