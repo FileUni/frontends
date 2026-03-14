@@ -1787,6 +1787,9 @@
       "example": "example",
       "noteEmpty": "No note available for the current key.",
       "noteHint": "Notes map to config keys and sections.",
+      "license": {
+        "title": "License Management"
+      },
       "quickWizard": {
         "title": "Quick Config Wizard",
         "subtitle": "Friendly form stays synchronized with the page-level config editor.",
@@ -1797,7 +1800,7 @@
           "database": "Database",
           "cache": "Cache",
           "advanced": "Common Advanced",
-          "license": "License Management"
+          "other": "Other Config"
         },
         "fields": {
           "dbType": "DB Type",
@@ -1853,6 +1856,9 @@
           "licensePlaceholderHint": "License management entry is reserved for future implementation.",
           "openAdminConfig": "Open Admin Config Workspace",
           "changeAdminPassword": "Change Admin Password"
+        },
+        "otherActions": {
+          "intro": "Extra configuration actions live here, such as license management."
         },
         "performance": {
           "intro": "Select recommended settings based on your hardware. These are suggestions - you can manually adjust all parameters in subsequent steps.",

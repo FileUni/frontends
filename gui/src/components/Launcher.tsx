@@ -48,6 +48,15 @@ interface ServiceStatusResponse {
   is_running: boolean;
 }
 
+interface LicenseStatusPayload {
+  is_valid: boolean;
+  msg: string;
+  device_code: string;
+  current_users: number;
+  max_users: number;
+  features: string[];
+}
+
 interface RuntimeDirsInspection {
   config_dir: string;
   app_data_dir: string;
@@ -131,6 +140,12 @@ export default function Launcher() {
   const [configSummary, setConfigSummary] = useState('');
   const [configSummaryLevel, setConfigSummaryLevel] = useState<'success' | 'warning' | 'error' | 'info'>('info');
   const [configFilePath, setConfigFilePath] = useState('');
+
+  // License management state (Quick Wizard)
+  const [licenseStatus, setLicenseStatus] = useState<LicenseStatusPayload | null>(null);
+  const [licenseKey, setLicenseKey] = useState('');
+  const [licenseSaving, setLicenseSaving] = useState(false);
+
   const [runtimeDirPresets, setRuntimeDirPresets] = useState<RuntimeDirPresets | null>(null);
   const [missingConfigPrompt, setMissingConfigPrompt] = useState<MissingConfigPromptState | null>(null);
   const [setupStatus, setSetupStatus] = useState<InstallationStatus | null>(null);
@@ -214,6 +229,36 @@ export default function Launcher() {
     }
   };
 
+  const refreshLicenseStatus = async () => {
+    if (!isTauriRuntime()) {
+      return;
+    }
+    try {
+      const payload = await safeInvoke<LicenseStatusPayload>('get_license_status');
+      setLicenseStatus(payload);
+    } catch (error: unknown) {
+      console.error('Failed to load license status:', error);
+    }
+  };
+
+  const handleUpdateLicenseKey = async () => {
+    const trimmed = licenseKey.trim();
+    if (!trimmed) {
+      return;
+    }
+    setLicenseSaving(true);
+    try {
+      await safeInvoke<void>('update_license_key', { licenseKey: trimmed });
+      toast.success(t('admin.saveSuccess'));
+      setLicenseKey('');
+      await refreshLicenseStatus();
+    } catch (error: unknown) {
+      toast.error(extractErrorMessage(error));
+    } finally {
+      setLicenseSaving(false);
+    }
+  };
+
   const loadSetupWorkbench = async () => {
     setConfigFetching(true);
     try {
@@ -227,6 +272,7 @@ export default function Launcher() {
       setConfigErrors([]);
       setConfigSummary('');
       setConfigSummaryLevel('info');
+      await refreshLicenseStatus();
     } catch (error) {
       toast.error(extractErrorMessage(error));
     } finally {
@@ -400,6 +446,7 @@ export default function Launcher() {
       setConfigErrors([]);
       setConfigSummary('');
       setConfigSummaryLevel('info');
+      await refreshLicenseStatus();
     } catch (e: unknown) {
       toast.error(String(e));
       setIsEditingConfig(false);
@@ -890,6 +937,18 @@ export default function Launcher() {
                   reloadSummaryLevel={configSummaryLevel}
                   restartNotice={t('setup.admin.finalConfirmDesc')}
                   quickWizardEnabled={true}
+                  quickWizardLicense={{
+                    isValid: Boolean(licenseStatus?.is_valid),
+                    currentUsers: licenseStatus?.current_users ?? 0,
+                    maxUsers: licenseStatus?.max_users ?? 0,
+                    deviceCode: licenseStatus?.device_code ?? '',
+                    licenseKey,
+                    saving: licenseSaving,
+                    onLicenseKeyChange: setLicenseKey,
+                    onApplyLicense: () => {
+                      void handleUpdateLicenseKey();
+                    },
+                  }}
                   onOpenAdminPassword={() => {
                     setIsSetupAdminPasswordOpen(true);
                   }}
@@ -1283,6 +1342,18 @@ export default function Launcher() {
               showCancel={false}
               reloadSummary={configSummary}
               reloadSummaryLevel={configSummaryLevel}
+              quickWizardLicense={{
+                isValid: Boolean(licenseStatus?.is_valid),
+                currentUsers: licenseStatus?.current_users ?? 0,
+                maxUsers: licenseStatus?.max_users ?? 0,
+                deviceCode: licenseStatus?.device_code ?? '',
+                licenseKey,
+                saving: licenseSaving,
+                onLicenseKeyChange: setLicenseKey,
+                onApplyLicense: () => {
+                  void handleUpdateLicenseKey();
+                },
+              }}
             />
           </ConfigWorkbenchShell>
         </div>

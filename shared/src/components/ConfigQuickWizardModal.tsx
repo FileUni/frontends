@@ -8,7 +8,7 @@ import { LicenseManagementModal } from './LicenseManagementModal';
 import { useResolvedTheme } from '../lib/theme';
 
 type DatabaseType = 'postgres' | 'sqlite';
-type FriendlyStep = 'performance' | 'database' | 'cache' | 'advanced' | 'license';
+type FriendlyStep = 'performance' | 'database' | 'cache' | 'advanced' | 'other';
 type PerformanceTier = 'extreme-low' | 'low' | 'medium' | 'good';
 type LoadProfile = 'light' | 'heavy';
 type CaptchaPreheatMode = 'memory' | 'balanced' | 'throughput';
@@ -1373,7 +1373,7 @@ export const ConfigQuickWizardModal: React.FC<ConfigQuickWizardModalProps> = ({
 
   const friendlySteps = useMemo<FriendlyStep[]>(() => {
     return licenseWizard
-      ? ['performance', 'database', 'cache', 'advanced', 'license']
+      ? ['performance', 'database', 'cache', 'advanced', 'other']
       : ['performance', 'database', 'cache', 'advanced'];
   }, [licenseWizard]);
 
@@ -2550,83 +2550,45 @@ export const ConfigQuickWizardModal: React.FC<ConfigQuickWizardModalProps> = ({
                   <h4 className="text-sm sm:text-sm font-black uppercase tracking-wide mb-3">{t('admin.config.quickWizard.steps.advanced')}</h4>
                   <p className={cn("text-sm sm:text-sm mb-3", isDark ? "text-slate-400" : "text-slate-800 font-black")}>{t('admin.config.quickWizard.advancedActions.intro')}</p>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {licenseWizard && (
+                    {onResetAdminPassword && (
                       <button
                         type="button"
                         className={cn(
                           "h-12 rounded-lg border text-sm sm:text-sm font-black transition-all inline-flex items-center justify-center gap-2 shadow-sm",
-                          isDark 
-                            ? "border-amber-500/40 bg-amber-500/10 text-amber-200 hover:bg-amber-500/20" 
-                            : "border-amber-500/50 bg-amber-50 text-amber-900 hover:bg-amber-100"
+                          isDark
+                            ? "border-cyan-400/40 bg-cyan-500/10 text-cyan-200 hover:bg-cyan-500/20"
+                            : "border-cyan-500/50 bg-cyan-50 text-cyan-900 hover:bg-cyan-100"
                         )}
-                        onClick={() => setIsLicenseModalOpen(true)}
+                        onClick={() => setShowAdminPasswordPanel(true)}
                       >
-                        <Key size={18} className={isDark ? "text-amber-400" : "text-amber-600"} />
-                        {t('admin.config.quickWizard.steps.license')}
+                        <Shield size={18} className={isDark ? "text-cyan-300" : "text-cyan-700"} />
+                        {t('admin.config.quickWizard.actions.setAdminPassword')}
                       </button>
                     )}
                   </div>
                 </section>
               )}
 
-              {friendlyStep === 'license' && licenseWizard && (
+              {friendlyStep === 'other' && licenseWizard && (
                 <section className={cn(
-                  "rounded-2xl border p-3 sm:p-4 space-y-3 shadow-sm",
+                  "rounded-2xl border p-3 sm:p-4 shadow-sm",
                   isDark ? "border-white/10 bg-white/[0.03]" : "border-slate-200 bg-white"
                 )}>
-                  <h4 className="text-sm sm:text-sm font-black uppercase tracking-wide mb-1">{t('admin.config.quickWizard.steps.license')}</h4>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div className={cn(
-                      "rounded-lg border p-3",
-                      isDark ? "border-white/10 bg-black/20" : "border-slate-100 bg-slate-50"
-                    )}>
-                      <div className={cn("text-sm uppercase font-black opacity-60 mb-1", isDark ? "text-white" : "text-slate-500")}>{t('admin.config.quickWizard.fields.licenseStatus')}</div>
-                      <div className={cn(
-                        'text-sm font-black',
-                        licenseWizard.isValid ? (isDark ? 'text-emerald-300' : 'text-emerald-700') : (isDark ? 'text-red-300' : 'text-red-700'),
-                      )}>
-                        {licenseWizard.isValid
-                          ? t('admin.config.quickWizard.options.licenseAuthorized')
-                          : t('admin.config.quickWizard.options.licenseUnauthorized')}
-                      </div>
-                    </div>
-                    <div className={cn(
-                      "rounded-lg border p-3",
-                      isDark ? "border-white/10 bg-black/20" : "border-slate-100 bg-slate-50"
-                    )}>
-                      <div className={cn("text-sm uppercase font-black opacity-60 mb-1", isDark ? "text-white" : "text-slate-500")}>{t('admin.config.quickWizard.fields.maxUsers')}</div>
-                      <div className="text-sm font-black">{licenseWizard.currentUsers} / {licenseWizard.maxUsers}</div>
-                    </div>
-                    <div className={cn(
-                      "rounded-lg border p-3 sm:col-span-2",
-                      isDark ? "border-white/10 bg-black/20" : "border-slate-100 bg-slate-50"
-                    )}>
-                      <div className={cn("text-sm uppercase font-black opacity-60 mb-1", isDark ? "text-white" : "text-slate-500")}>{t('admin.config.quickWizard.fields.hwFingerprint')}</div>
-                      <div className={cn("text-sm sm:text-sm font-mono break-all font-bold", isDark ? "text-white" : "text-slate-800")}>{licenseWizard.deviceCode || '-'}</div>
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className={cn("text-sm font-black", isDark ? "text-slate-300" : "text-slate-700")}>{t('admin.config.quickWizard.fields.licenseKey')}</label>
-                    <input
-                      className={cn(
-                        "w-full h-10 rounded-lg border px-3 text-sm focus:outline-none focus:ring-2",
-                        isDark ? "border-white/15 bg-black/30 text-white focus:ring-primary/30" : "border-slate-300 bg-white text-slate-900 focus:ring-primary/20 shadow-sm"
-                      )}
-                      value={licenseWizard.licenseKey}
-                      placeholder={t('admin.config.quickWizard.fields.licenseInputPlaceholder')}
-                      onChange={(event) => licenseWizard.onLicenseKeyChange(event.target.value)}
-                    />
-                  </div>
-
-                  <div className="flex justify-end">
+                  <h4 className="text-sm sm:text-sm font-black uppercase tracking-wide mb-3">{t('admin.config.quickWizard.steps.other')}</h4>
+                  <p className={cn("text-sm sm:text-sm mb-3", isDark ? "text-slate-400" : "text-slate-800 font-black")}>{t('admin.config.quickWizard.otherActions.intro')}</p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <button
                       type="button"
-                      className="h-9 px-4 rounded-lg border border-primary bg-primary text-white text-sm sm:text-sm font-black disabled:opacity-40 shadow-lg shadow-primary/20 transition-all hover:opacity-90"
-                      onClick={licenseWizard.onApplyLicense}
-                      disabled={licenseWizard.saving || licenseWizard.licenseKey.trim().length === 0}
+                      className={cn(
+                        "h-12 rounded-lg border text-sm sm:text-sm font-black transition-all inline-flex items-center justify-center gap-2 shadow-sm",
+                        isDark 
+                          ? "border-amber-500/40 bg-amber-500/10 text-amber-200 hover:bg-amber-500/20" 
+                          : "border-amber-500/50 bg-amber-50 text-amber-900 hover:bg-amber-100"
+                      )}
+                      onClick={() => setIsLicenseModalOpen(true)}
                     >
-                      {t('admin.config.quickWizard.actions.applyLicense')}
+                      <Key size={18} className={isDark ? "text-amber-400" : "text-amber-600"} />
+                      {t('admin.config.license.title')}
                     </button>
                   </div>
                 </section>
@@ -2701,7 +2663,19 @@ export const ConfigQuickWizardModal: React.FC<ConfigQuickWizardModalProps> = ({
           licenseKey={licenseWizard.licenseKey}
           saving={licenseWizard.saving}
           onLicenseKeyChange={licenseWizard.onLicenseKeyChange}
-          onApplyLicense={licenseWizard.onApplyLicense}
+          onApplyLicense={() => {
+            const nextKey = licenseWizard.licenseKey.trim();
+            if (nextKey.length > 0 && parsed.value) {
+              const nextConfig = deepClone(parsed.value);
+              const licenseSection = ensureRecord(nextConfig, 'license');
+              licenseSection.license_key = nextKey;
+              const nextContent = tomlAdapter.stringify(nextConfig);
+              isInternalSyncRef.current = true;
+              lastObservedContentRef.current = nextContent;
+              onContentChange(nextContent);
+            }
+            licenseWizard.onApplyLicense();
+          }}
         />
       )}
     </div>

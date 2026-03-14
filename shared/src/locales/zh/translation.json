@@ -1805,6 +1805,9 @@
       "example": "示例配置",
       "noteEmpty": "当前项没有可用说明。",
       "noteHint": "说明对应于配置键和各段落。",
+      "license": {
+        "title": "授权管理"
+      },
       "quickWizard": {
         "title": "快速配置向导",
         "subtitle": "用户友好表单会与页面中的配置编辑器实时联动。",
@@ -1815,7 +1818,7 @@
           "database": "数据库",
           "cache": "缓存",
           "advanced": "常见高阶配置",
-          "license": "授权管理"
+          "other": "其他配置"
         },
         "fields": {
           "dbType": "数据库类型",
@@ -1871,6 +1874,9 @@
           "licensePlaceholderHint": "License management entry is reserved for future implementation.",
           "openAdminConfig": "打开管理员配置界面",
           "changeAdminPassword": "修改管理员密码"
+        },
+        "otherActions": {
+          "intro": "这里提供一些附加配置入口，例如授权管理。"
         },
         "performance": {
           "intro": "根据您的硬件环境选择推荐配置。此为建议值，您可以在后续步骤中手动调整各项参数。",

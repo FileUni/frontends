@@ -83,7 +83,7 @@ export const LicenseManagementModal: React.FC<LicenseManagementModalProps> = ({
             </div>
             <div className="min-w-0">
               <h3 className="text-sm sm:text-base font-black uppercase tracking-widest truncate">
-                {t('admin.config.quickWizard.steps.license')}
+                {t('admin.config.license.title')}
               </h3>
               <p className={cn("text-[10px] font-bold uppercase tracking-widest mt-0.5", isDark ? "text-slate-500" : "text-slate-400")}>
                 {t('admin.config.quickWizard.fields.licenseStatus')}

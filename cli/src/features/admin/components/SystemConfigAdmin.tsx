@@ -8,14 +8,10 @@ import {
   type ConfigError,
   type ConfigNoteEntry as SharedConfigNoteEntry,
   SystemConfigWorkbench,
-  LicenseManagementModal,
   useToastStore,
-  useThemeStore,
 } from '@fileuni/shared';
 import { useAuthzStore } from '@/stores/authz.ts';
 import { useAuthStore } from '@/stores/auth.ts';
-import { Key } from 'lucide-react';
-import { cn } from '@/lib/utils.ts';
 
 type ConfigRawResponse = components['schemas']['ConfigRawResponse'];
 type ConfigNotesResponse = components['schemas']['ConfigNotesResponse'];
@@ -108,14 +104,6 @@ const formatLineDiffSummary = (stats: LineDiffStats): string => {
 export const SystemConfigAdmin = () => {
   const { t } = useTranslation();
   const { addToast } = useToastStore();
-  const { theme } = useThemeStore();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  const isDark = theme === 'dark' || (theme === 'system' && mounted && typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches);
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -128,7 +116,6 @@ export const SystemConfigAdmin = () => {
   const [validationErrors, setValidationErrors] = useState<ConfigValidationError[]>([]);
   const [licenseStatus, setLicenseStatus] = useState<LicenseStatus | null>(null);
   const [licenseKey, setLicenseKey] = useState('');
-  const [isLicenseModalOpen, setIsLicenseModalOpen] = useState(false);
   const [isResettingAdminPassword, setIsResettingAdminPassword] = useState(false);
   const [reloadSummary, setReloadSummary] = useState('');
   const [reloadSummaryLevel, setReloadSummaryLevel] = useState<'success' | 'warning' | 'error' | 'info'>('info');
@@ -345,21 +332,6 @@ export const SystemConfigAdmin = () => {
 
   return (
     <>
-      <div className="mb-3 flex justify-end">
-        <button
-          type="button"
-          onClick={() => setIsLicenseModalOpen(true)}
-          className={cn(
-            "px-3 py-1.5 rounded-lg border font-black transition-all inline-flex items-center gap-1.5 shadow-sm",
-            isDark 
-              ? "border-amber-500/40 bg-amber-500/10 text-amber-200 hover:bg-amber-500/20 shadow-none" 
-              : "border-amber-500/50 bg-amber-50 text-amber-900 hover:bg-amber-100"
-          )}
-        >
-          <Key size={18} className={isDark ? "text-amber-400" : "text-amber-600"} />
-          {t('admin.config.quickWizard.steps.license')}
-        </button>
-      </div>
       <SystemConfigWorkbench
         tomlAdapter={toml}
         loading={loading}
@@ -393,21 +365,6 @@ export const SystemConfigAdmin = () => {
         onResetAdminPassword={handleQuickWizardResetAdminPassword}
         isResettingAdminPassword={isResettingAdminPassword}
       />
-      {licenseStatus && (
-        <LicenseManagementModal
-          isOpen={isLicenseModalOpen}
-          onClose={() => setIsLicenseModalOpen(false)}
-          isValid={licenseStatus.is_valid}
-          currentUsers={licenseStatus.current_users}
-          maxUsers={licenseStatus.max_users}
-          deviceCode={licenseStatus.device_code}
-          licenseKey={licenseKey}
-          saving={saving}
-          onLicenseKeyChange={setLicenseKey}
-          onApplyLicense={() => void handleUpdateLicense()}
-          features={licenseStatus.features}
-        />
-      )}
     </>
   );
 };
