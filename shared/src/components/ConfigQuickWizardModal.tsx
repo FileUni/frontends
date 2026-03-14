@@ -1,10 +1,11 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
-import { AlertTriangle, Cpu, Key, Settings2, Shield, Wand2, X } from 'lucide-react';
+import { AlertTriangle, Cpu, HardDrive, Key, Settings2, Shield, Wand2, X } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { AdminPasswordPanel } from './AdminPasswordPanel';
 import { LicenseManagementModal } from './LicenseManagementModal';
+import { VfsStorageConfigModal } from './VfsStorageConfigModal';
 import { useResolvedTheme } from '../lib/theme';
 
 type DatabaseType = 'postgres' | 'sqlite';
@@ -1362,6 +1363,7 @@ export const ConfigQuickWizardModal: React.FC<ConfigQuickWizardModalProps> = ({
   const [showDetailedPreview, setShowDetailedPreview] = useState(false);
   const [showAdminPasswordPanel, setShowAdminPasswordPanel] = useState(false);
   const [isLicenseModalOpen, setIsLicenseModalOpen] = useState(false);
+  const [isVfsStorageModalOpen, setIsVfsStorageModalOpen] = useState(false);
   const resolvedTheme = useResolvedTheme();
 
   const draftRef = useRef<FriendlyDraft>(defaultDraft);
@@ -1372,10 +1374,8 @@ export const ConfigQuickWizardModal: React.FC<ConfigQuickWizardModalProps> = ({
   const isDark = resolvedTheme === 'dark';
 
   const friendlySteps = useMemo<FriendlyStep[]>(() => {
-    return licenseWizard
-      ? ['performance', 'database', 'cache', 'advanced', 'other']
-      : ['performance', 'database', 'cache', 'advanced'];
-  }, [licenseWizard]);
+    return ['performance', 'database', 'cache', 'advanced', 'other'];
+  }, []);
 
   const allocatorRecommendation = useMemo(() => {
     const normalized = normalizeRuntimeOs(runtimeOs);
@@ -1729,6 +1729,9 @@ export const ConfigQuickWizardModal: React.FC<ConfigQuickWizardModalProps> = ({
       isInternalSyncRef.current = false;
       lastObservedContentRef.current = content;
       setShowDetailedPreview(false);
+      setShowAdminPasswordPanel(false);
+      setIsLicenseModalOpen(false);
+      setIsVfsStorageModalOpen(false);
       return;
     }
 
@@ -1877,10 +1880,10 @@ export const ConfigQuickWizardModal: React.FC<ConfigQuickWizardModalProps> = ({
                 "rounded-xl border p-2 sm:p-3",
                 isDark ? "border-white/10 bg-white/[0.02]" : "border-slate-300 bg-slate-100 shadow-inner"
               )}>
-                <div className={cn(
-                  'grid grid-cols-1 gap-2',
-                  friendlySteps.length >= 4 ? 'sm:grid-cols-4' : 'sm:grid-cols-3',
-                )}>
+                 <div className={cn(
+                   'grid grid-cols-1 gap-2',
+                   friendlySteps.length >= 5 ? 'sm:grid-cols-5' : friendlySteps.length >= 4 ? 'sm:grid-cols-4' : 'sm:grid-cols-3',
+                 )}>
                   {friendlySteps.map((step, index) => (
                     <button
                       key={step}
@@ -2569,7 +2572,7 @@ export const ConfigQuickWizardModal: React.FC<ConfigQuickWizardModalProps> = ({
                 </section>
               )}
 
-              {friendlyStep === 'other' && licenseWizard && (
+              {friendlyStep === 'other' && (
                 <section className={cn(
                   "rounded-2xl border p-3 sm:p-4 shadow-sm",
                   isDark ? "border-white/10 bg-white/[0.03]" : "border-slate-200 bg-white"
@@ -2577,18 +2580,34 @@ export const ConfigQuickWizardModal: React.FC<ConfigQuickWizardModalProps> = ({
                   <h4 className="text-sm sm:text-sm font-black uppercase tracking-wide mb-3">{t('admin.config.quickWizard.steps.other')}</h4>
                   <p className={cn("text-sm sm:text-sm mb-3", isDark ? "text-slate-400" : "text-slate-800 font-black")}>{t('admin.config.quickWizard.otherActions.intro')}</p>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {licenseWizard && (
+                      <button
+                        type="button"
+                        className={cn(
+                          "h-12 rounded-lg border text-sm sm:text-sm font-black transition-all inline-flex items-center justify-center gap-2 shadow-sm",
+                          isDark 
+                            ? "border-amber-500/40 bg-amber-500/10 text-amber-200 hover:bg-amber-500/20" 
+                            : "border-amber-500/50 bg-amber-50 text-amber-900 hover:bg-amber-100"
+                        )}
+                        onClick={() => setIsLicenseModalOpen(true)}
+                      >
+                        <Key size={18} className={isDark ? "text-amber-400" : "text-amber-600"} />
+                        {t('admin.config.license.title')}
+                      </button>
+                    )}
+
                     <button
                       type="button"
                       className={cn(
                         "h-12 rounded-lg border text-sm sm:text-sm font-black transition-all inline-flex items-center justify-center gap-2 shadow-sm",
-                        isDark 
-                          ? "border-amber-500/40 bg-amber-500/10 text-amber-200 hover:bg-amber-500/20" 
-                          : "border-amber-500/50 bg-amber-50 text-amber-900 hover:bg-amber-100"
+                        isDark
+                          ? "border-cyan-400/40 bg-cyan-500/10 text-cyan-200 hover:bg-cyan-500/20"
+                          : "border-cyan-500/50 bg-cyan-50 text-cyan-900 hover:bg-cyan-100"
                       )}
-                      onClick={() => setIsLicenseModalOpen(true)}
+                      onClick={() => setIsVfsStorageModalOpen(true)}
                     >
-                      <Key size={18} className={isDark ? "text-amber-400" : "text-amber-600"} />
-                      {t('admin.config.license.title')}
+                      <HardDrive size={18} className={isDark ? "text-cyan-300" : "text-cyan-700"} />
+                      {t('admin.config.storage.title')}
                     </button>
                   </div>
                 </section>
@@ -2678,6 +2697,19 @@ export const ConfigQuickWizardModal: React.FC<ConfigQuickWizardModalProps> = ({
           }}
         />
       )}
+
+      <VfsStorageConfigModal
+        isOpen={isVfsStorageModalOpen}
+        onClose={() => setIsVfsStorageModalOpen(false)}
+        tomlAdapter={tomlAdapter}
+        content={content}
+        onContentChange={(nextContent) => {
+          isInternalSyncRef.current = true;
+          lastObservedContentRef.current = nextContent;
+          onContentChange(nextContent);
+          setParseError(null);
+        }}
+      />
     </div>
   );
 

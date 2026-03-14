@@ -1808,6 +1808,108 @@
       "license": {
         "title": "授权管理"
       },
+      "storage": {
+        "title": "存储池与后端",
+        "subtitle": "可视化编辑 vfs_storage_hub 存储配置",
+        "tabs": {
+          "pools": "存储池",
+          "connectors": "后端连接器",
+          "policies": "策略"
+        },
+        "fields": {
+          "defaultPool": "默认存储池",
+          "name": "名称",
+          "driver": "后端类型",
+          "root": "Root",
+          "enabled": "启用",
+          "options": "高级选项"
+        },
+        "drivers": {
+          "fs": "本地文件系统 (fs)",
+          "s3": "S3 兼容 (s3)",
+          "webdav": "WebDAV (webdav)",
+          "memory": "内存 (memory, Dev)",
+          "android_saf": "Android SAF (android_saf)",
+          "ios_scoped_fs": "iOS Scoped FS (ios_scoped_fs)"
+        },
+        "connectors": {
+          "title": "连接器列表",
+          "connector": "连接器",
+          "commonOptions": "常用选项"
+        },
+        "pools": {
+          "title": "存储池列表",
+          "pool": "存储池",
+          "primary": "主连接器",
+          "backup": "备用连接器",
+          "writeCache": "写入缓存"
+        },
+        "policies": {
+          "title": "存储策略",
+          "hint": "可选：按 role_id 指定 pool_name 与 default_quota（字节）。若留空，将使用 default_pool。",
+          "empty": "当前没有策略（policies = []）。",
+          "policy": "策略",
+          "roleId": "Role ID",
+          "poolName": "Pool",
+          "defaultQuota": "默认配额（字节）"
+        },
+        "actions": {
+          "addConnector": "添加连接器",
+          "addPool": "添加存储池",
+          "addPolicy": "添加策略",
+          "addOption": "添加选项",
+          "resetLocal": "重置为本地存储默认值",
+          "apply": "写入配置"
+        },
+        "placeholders": {
+          "optionKey": "key",
+          "optionValue": "value",
+          "root": {
+            "fs": "{APPDATADIR}/vfs",
+            "s3": "/ (root prefix)",
+            "webdav": "/",
+            "memory": "/",
+            "android_saf": "content://...",
+            "ios_scoped_fs": "bookmark_b64:<BASE64>"
+          }
+        },
+        "hints": {
+          "root": {
+            "fs": "本地存储目录路径。移动端必须位于 APPDATADIR 沙箱内。",
+            "s3": "S3 根前缀 (root prefix)。",
+            "webdav": "WebDAV 根路径。",
+            "memory": "内存后端 root 仅用于通过配置校验。",
+            "android_saf": "Android SAF 授权目录 Tree URI（content://...）。",
+            "ios_scoped_fs": "iOS 安全作用域书签，需以 bookmark_b64: 开头。"
+          }
+        },
+        "validation": {
+          "title": "配置校验失败",
+          "minimumOneConnector": "至少需要 1 个连接器",
+          "minimumOnePool": "至少需要 1 个存储池",
+          "errors": {
+            "parseRoot": "TOML 根必须为对象",
+            "parseFailed": "解析配置失败: {{message}}",
+            "atLeastOneConnector": "至少需要 1 个连接器",
+            "connectorNamesUnique": "连接器名称必须唯一",
+            "connectorNameRequired": "connectors[{{index}}].name 为必填",
+            "connectorDriverRequired": "connectors[{{index}}].driver 为必填",
+            "connectorRootRequired": "connectors[{{index}}].root 为必填",
+            "atLeastOnePool": "至少需要 1 个存储池",
+            "poolNamesUnique": "存储池名称必须唯一",
+            "poolNameRequired": "pools[{{index}}].name 为必填",
+            "poolPrimaryRequired": "pools[{{index}}].primary_connector 为必填",
+            "poolPrimaryUnknown": "pools[{{index}}].primary_connector 引用未知连接器 '{{name}}'",
+            "poolBackupUnknown": "pools[{{index}}].backup_connector 引用未知连接器 '{{name}}'",
+            "defaultPoolRequired": "default_pool 为必填",
+            "defaultPoolNotFound": "default_pool '{{name}}' 必须匹配 pools 中已存在的存储池名称",
+            "policyRoleRequired": "policies[{{index}}].role_id 为必填",
+            "policyPoolRequired": "policies[{{index}}].pool_name 为必填",
+            "policyPoolUnknown": "policies[{{index}}].pool_name 引用未知存储池 '{{name}}'",
+            "policyQuotaInvalid": "policies[{{index}}].default_quota 必须为 >= 0 的数字"
+          }
+        }
+      },
       "quickWizard": {
         "title": "快速配置向导",
         "subtitle": "用户友好表单会与页面中的配置编辑器实时联动。",
@@ -1876,7 +1978,7 @@
           "changeAdminPassword": "修改管理员密码"
         },
         "otherActions": {
-          "intro": "这里提供一些附加配置入口，例如授权管理。"
+          "intro": "这里提供一些附加配置入口，例如授权管理与存储池/后端配置。"
         },
         "performance": {
           "intro": "根据您的硬件环境选择推荐配置。此为建议值，您可以在后续步骤中手动调整各项参数。",

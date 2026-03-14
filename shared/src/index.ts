@@ -7,6 +7,7 @@ export * from './components/ConfigEditorPanel';
 export * from './components/ConfigQuickWizardModal';
 export * from './components/MonacoEditor';
 export * from './components/LicenseManagementModal';
+export * from './components/VfsStorageConfigModal';
 export * from './components/SystemConfigWorkbench';
 export * from './components/ConfigWorkbenchShell';
 export * from './components/ServiceControlPanel';

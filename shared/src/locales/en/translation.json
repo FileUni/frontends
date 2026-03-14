@@ -1790,6 +1790,108 @@
       "license": {
         "title": "License Management"
       },
+      "storage": {
+        "title": "Storage Pools & Backends",
+        "subtitle": "Visual editor for vfs_storage_hub storage configuration",
+        "tabs": {
+          "pools": "Pools",
+          "connectors": "Connectors",
+          "policies": "Policies"
+        },
+        "fields": {
+          "defaultPool": "Default Pool",
+          "name": "Name",
+          "driver": "Driver",
+          "root": "Root",
+          "enabled": "Enabled",
+          "options": "Advanced Options"
+        },
+        "drivers": {
+          "fs": "Local Filesystem (fs)",
+          "s3": "S3 Compatible (s3)",
+          "webdav": "WebDAV (webdav)",
+          "memory": "Memory (memory, Dev)",
+          "android_saf": "Android SAF (android_saf)",
+          "ios_scoped_fs": "iOS Scoped FS (ios_scoped_fs)"
+        },
+        "connectors": {
+          "title": "Connector List",
+          "connector": "Connector",
+          "commonOptions": "Common Options"
+        },
+        "pools": {
+          "title": "Pool List",
+          "pool": "Pool",
+          "primary": "Primary Connector",
+          "backup": "Backup Connector",
+          "writeCache": "Write Cache"
+        },
+        "policies": {
+          "title": "Storage Policies",
+          "hint": "Optional: map role_id to pool_name and default_quota (bytes). If empty, default_pool is used.",
+          "empty": "No policies currently (policies = []).",
+          "policy": "Policy",
+          "roleId": "Role ID",
+          "poolName": "Pool",
+          "defaultQuota": "Default Quota (bytes)"
+        },
+        "actions": {
+          "addConnector": "Add Connector",
+          "addPool": "Add Pool",
+          "addPolicy": "Add Policy",
+          "addOption": "Add Option",
+          "resetLocal": "Reset to Local Storage Defaults",
+          "apply": "Write to Config"
+        },
+        "placeholders": {
+          "optionKey": "key",
+          "optionValue": "value",
+          "root": {
+            "fs": "{APPDATADIR}/vfs",
+            "s3": "/ (root prefix)",
+            "webdav": "/",
+            "memory": "/",
+            "android_saf": "content://...",
+            "ios_scoped_fs": "bookmark_b64:<BASE64>"
+          }
+        },
+        "hints": {
+          "root": {
+            "fs": "Local directory path. On mobile, it must be under the APPDATADIR sandbox.",
+            "s3": "S3 root prefix.",
+            "webdav": "WebDAV root path.",
+            "memory": "Memory backend root is only used to satisfy config validation.",
+            "android_saf": "Android SAF granted Tree URI (content://...).",
+            "ios_scoped_fs": "iOS security-scoped bookmark; must start with bookmark_b64:."
+          }
+        },
+        "validation": {
+          "title": "Validation Failed",
+          "minimumOneConnector": "At least 1 connector is required",
+          "minimumOnePool": "At least 1 pool is required",
+          "errors": {
+            "parseRoot": "TOML root must be an object",
+            "parseFailed": "Failed to parse config: {{message}}",
+            "atLeastOneConnector": "At least 1 connector is required",
+            "connectorNamesUnique": "Connector names must be unique",
+            "connectorNameRequired": "connectors[{{index}}].name is required",
+            "connectorDriverRequired": "connectors[{{index}}].driver is required",
+            "connectorRootRequired": "connectors[{{index}}].root is required",
+            "atLeastOnePool": "At least 1 pool is required",
+            "poolNamesUnique": "Pool names must be unique",
+            "poolNameRequired": "pools[{{index}}].name is required",
+            "poolPrimaryRequired": "pools[{{index}}].primary_connector is required",
+            "poolPrimaryUnknown": "pools[{{index}}].primary_connector references unknown connector '{{name}}'",
+            "poolBackupUnknown": "pools[{{index}}].backup_connector references unknown connector '{{name}}'",
+            "defaultPoolRequired": "default_pool is required",
+            "defaultPoolNotFound": "default_pool '{{name}}' must match an existing pool name",
+            "policyRoleRequired": "policies[{{index}}].role_id is required",
+            "policyPoolRequired": "policies[{{index}}].pool_name is required",
+            "policyPoolUnknown": "policies[{{index}}].pool_name references unknown pool '{{name}}'",
+            "policyQuotaInvalid": "policies[{{index}}].default_quota must be a number >= 0"
+          }
+        }
+      },
       "quickWizard": {
         "title": "Quick Config Wizard",
         "subtitle": "Friendly form stays synchronized with the page-level config editor.",
@@ -1858,7 +1960,7 @@
           "changeAdminPassword": "Change Admin Password"
         },
         "otherActions": {
-          "intro": "Extra configuration actions live here, such as license management."
+          "intro": "Extra configuration actions live here, such as license management and storage pool/backend setup."
         },
         "performance": {
           "intro": "Select recommended settings based on your hardware. These are suggestions - you can manually adjust all parameters in subsequent steps.",
