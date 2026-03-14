@@ -1,0 +1,573 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "yh-config-mode-api",
+    "description": "Config-mode API for FileUni (isolated setup/configuration mode)",
+    "license": {
+      "name": ""
+    },
+    "version": "0.0.2-alpha4"
+  },
+  "paths": {
+    "/api/v1/config-set/apply": {
+      "post": {
+        "tags": [
+          "config-set"
+        ],
+        "operationId": "apply_config_set",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConfigSetApplyRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Config-set completed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Resp"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request or configuration",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Resp"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Permission denied",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Resp"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Initialization failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Resp"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/config-set/check-db": {
+      "post": {
+        "tags": [
+          "config-set"
+        ],
+        "operationId": "check_db_connection",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DbCheckRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Connection successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Resp"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Connection failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Resp"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Permission denied",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Resp"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/config-set/check-kv": {
+      "post": {
+        "tags": [
+          "config-set"
+        ],
+        "operationId": "check_kv_connection",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/KvCheckRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Connection successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Resp"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Connection failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Resp"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Permission denied",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Resp"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/config-set/config-reload": {
+      "post": {
+        "tags": [
+          "config-set"
+        ],
+        "operationId": "config_reload",
+        "responses": {
+          "200": {
+            "description": "Configuration reloaded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Resp"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Configuration reload failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Resp"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Permission denied",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Resp"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/config-set/config-test": {
+      "post": {
+        "tags": [
+          "config-set"
+        ],
+        "operationId": "config_test",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConfigSetTestReq"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Configuration test passed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Resp"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Configuration test failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Resp"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Permission denied",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Resp"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/config-set/finish": {
+      "post": {
+        "tags": [
+          "config-set"
+        ],
+        "operationId": "finish_config_set",
+        "responses": {
+          "200": {
+            "description": "Config-set finishing",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Resp"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Permission denied",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Resp"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/config-set/notes": {
+      "get": {
+        "tags": [
+          "config-set"
+        ],
+        "operationId": "get_config_notes",
+        "responses": {
+          "200": {
+            "description": "Get config notes",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Resp"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/config-set/status": {
+      "get": {
+        "tags": [
+          "config-set"
+        ],
+        "operationId": "get_config_set_status",
+        "responses": {
+          "200": {
+            "description": "Config-set status retrieved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Resp"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/config-set/template": {
+      "get": {
+        "tags": [
+          "config-set"
+        ],
+        "operationId": "get_config_template",
+        "responses": {
+          "200": {
+            "description": "Configuration templates retrieved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Resp"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ConfigNoteEntry": {
+        "type": "object",
+        "required": [
+          "desc_zh",
+          "desc_en",
+          "example"
+        ],
+        "properties": {
+          "desc_en": {
+            "type": "string"
+          },
+          "desc_zh": {
+            "type": "string"
+          },
+          "example": {
+            "type": "string"
+          }
+        }
+      },
+      "ConfigNotesResponse": {
+        "type": "object",
+        "required": [
+          "notes"
+        ],
+        "properties": {
+          "notes": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/ConfigNoteEntry"
+            },
+            "propertyNames": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "ConfigSetApplyRequest": {
+        "type": "object",
+        "required": [
+          "config_path",
+          "toml_content",
+          "admin_password"
+        ],
+        "properties": {
+          "admin_password": {
+            "type": "string"
+          },
+          "config_path": {
+            "type": "string"
+          },
+          "toml_content": {
+            "type": "string"
+          }
+        }
+      },
+      "ConfigSetApplyResponse": {
+        "type": "object",
+        "required": [
+          "admin_username",
+          "admin_action"
+        ],
+        "properties": {
+          "admin_action": {
+            "type": "string"
+          },
+          "admin_username": {
+            "type": "string"
+          },
+          "password_hint": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "ConfigSetStatusResponse": {
+        "type": "object",
+        "required": [
+          "is_config_set_mode",
+          "is_permitted",
+          "message"
+        ],
+        "properties": {
+          "is_config_set_mode": {
+            "type": "boolean"
+          },
+          "is_permitted": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "ConfigSetTestReq": {
+        "type": "object",
+        "required": [
+          "toml_content"
+        ],
+        "properties": {
+          "toml_content": {
+            "type": "string"
+          }
+        }
+      },
+      "ConfigSetValidationError": {
+        "type": "object",
+        "required": [
+          "line",
+          "column",
+          "message"
+        ],
+        "properties": {
+          "column": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "key": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "line": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "ConfigTemplateResponse": {
+        "type": "object",
+        "required": [
+          "current_config_path",
+          "current_config_content",
+          "config_exists"
+        ],
+        "properties": {
+          "config_exists": {
+            "type": "boolean"
+          },
+          "current_config_content": {
+            "type": "string"
+          },
+          "current_config_path": {
+            "type": "string"
+          }
+        }
+      },
+      "DbCheckRequest": {
+        "type": "object",
+        "required": [
+          "connection_string"
+        ],
+        "properties": {
+          "connection_string": {
+            "type": "string"
+          }
+        }
+      },
+      "KvCheckRequest": {
+        "type": "object",
+        "required": [
+          "connection_string"
+        ],
+        "properties": {
+          "connection_string": {
+            "type": "string"
+          }
+        }
+      },
+      "Resp": {
+        "type": "object",
+        "required": [
+          "success",
+          "code",
+          "data"
+        ],
+        "properties": {
+          "biz_code": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "cip": {
+            "type": "string"
+          },
+          "code": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          },
+          "data": {
+            "type": "object"
+          },
+          "msg": {
+            "type": "string"
+          },
+          "req_id": {
+            "type": "string"
+          },
+          "success": {
+            "type": "boolean"
+          }
+        }
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "config-set",
+      "description": "System configuration mode endpoints"
+    }
+  ]
+}

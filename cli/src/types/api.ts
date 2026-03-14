@@ -1172,6 +1172,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/file/admin/index-rebuild/{user_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["admin_rebuild_index_for_user"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/file/admin/index-sync/{user_id}": {
         parameters: {
             query?: never;
@@ -1773,6 +1789,22 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["preview_latex"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/file/public/direct/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_share_direct_root"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -3566,6 +3598,22 @@ export interface components {
             failed: number;
             imported: number;
             skipped: number;
+        };
+        IndexRebuildRequest: {
+            /**
+             * Format: int32
+             * @description Safety guard: maximum number of directories to process.
+             *
+             *     - `None` or `0` means unlimited.
+             *     - Default: 200000.
+             * @example 200000
+             */
+            max_directories?: number | null;
+            /**
+             * @description Start directory path (logical path). Default: "/".
+             * @example /
+             */
+            path?: string | null;
         };
         InstallToolRequest: {
             arch?: string | null;
@@ -6662,6 +6710,32 @@ export interface operations {
             };
         };
     };
+    admin_rebuild_index_for_user: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User ID */
+                user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["IndexRebuildRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Resp"];
+                };
+            };
+        };
+    };
     admin_sync_index_for_user: {
         parameters: {
             query?: never;
@@ -7598,6 +7672,27 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["Resp"];
                 };
+            };
+        };
+    };
+    get_share_direct_root: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Share ID */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Direct share content retrieved successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

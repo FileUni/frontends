@@ -53,6 +53,7 @@ export const FileSystemAdmin = () => {
   const [lockedUsers, setLockedUsers] = useState<string[]>([]);
   const [syncing, setSyncing] = useState(false);
   const [syncingUserIndex, setSyncingUserIndex] = useState(false);
+  const [rebuildingUserIndex, setRebuildingUserIndex] = useState(false);
   const [userIdForIndexSync, setUserIdForIndexSync] = useState('');
   const [unlocking, setUnlocking] = useState(false);
 
@@ -125,6 +126,41 @@ export const FileSystemAdmin = () => {
       addToast(handleApiError(e, t), 'error');
     } finally {
       setSyncingUserIndex(false);
+    }
+  };
+
+  const handleRebuildIndexForUser = async () => {
+    const userId = userIdForIndexSync.trim();
+    if (!userId) {
+      addToast(t('admin.fs.user_id_required'), 'warning');
+      return;
+    }
+    if (!confirm(t('admin.fs.rebuild_user_confirm'))) return;
+
+    setRebuildingUserIndex(true);
+    try {
+      const data = await extractData<{
+        task_id: string;
+        user_id: string;
+        path: string;
+        max_directories: number | null;
+      }>(
+        client.POST(`/api/v1/file/admin/index-rebuild/${encodeURIComponent(userId)}`, {
+          body: {
+            path: '/',
+            max_directories: 200000,
+          },
+        })
+      );
+      addToast(
+        t('admin.fs.rebuild_user_success', { user_id: data.user_id, task_id: data.task_id }),
+        'success'
+      );
+      setUserIdForIndexSync('');
+    } catch (e) {
+      addToast(handleApiError(e, t), 'error');
+    } finally {
+      setRebuildingUserIndex(false);
     }
   };
 
@@ -241,24 +277,40 @@ export const FileSystemAdmin = () => {
               <p className="text-sm font-bold opacity-50 italic">
                 {t('admin.fs.sync_user_index_desc')}
               </p>
-              <div className="flex flex-col sm:flex-row gap-3">
-                <div className="flex-1 min-w-0">
-                  <Input
-                    value={userIdForIndexSync}
-                    onChange={(e) => setUserIdForIndexSync(e.target.value)}
-                    placeholder={t('admin.fs.user_id_placeholder')}
-                    className="h-12 font-mono"
-                  />
+              <div className="flex flex-col gap-3">
+                <Input
+                  value={userIdForIndexSync}
+                  onChange={(e) => setUserIdForIndexSync(e.target.value)}
+                  placeholder={t('admin.fs.user_id_placeholder')}
+                  className="h-12 font-mono"
+                  disabled={syncingUserIndex || rebuildingUserIndex}
+                />
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <Button
+                    variant="outline"
+                    className="h-12 px-5 justify-center"
+                    onClick={handleSyncIndexForUser}
+                    disabled={syncingUserIndex || rebuildingUserIndex}
+                  >
+                    <RefreshCw size={18} className={syncingUserIndex ? 'animate-spin mr-2' : 'mr-2'} />
+                    <span className="font-black uppercase tracking-widest text-sm">{t('admin.fs.sync_user_index')}</span>
+                  </Button>
+
+                  <Button
+                    variant="outline"
+                    className="h-12 px-5 justify-center"
+                    onClick={handleRebuildIndexForUser}
+                    disabled={rebuildingUserIndex || syncingUserIndex}
+                  >
+                    <RefreshCw size={18} className={rebuildingUserIndex ? 'animate-spin mr-2' : 'mr-2'} />
+                    <span className="font-black uppercase tracking-widest text-sm">{t('admin.fs.rebuild_user_index')}</span>
+                  </Button>
                 </div>
-                <Button
-                  variant="outline"
-                  className="h-12 px-5 justify-center"
-                  onClick={handleSyncIndexForUser}
-                  disabled={syncingUserIndex}
-                >
-                  <RefreshCw size={18} className={syncingUserIndex ? 'animate-spin mr-2' : 'mr-2'} />
-                  <span className="font-black uppercase tracking-widest text-sm">{t('admin.fs.sync_user_index')}</span>
-                </Button>
+
+                <p className="text-xs font-bold opacity-40 italic">
+                  {t('admin.fs.rebuild_user_index_desc')}
+                </p>
               </div>
             </div>
           </div>

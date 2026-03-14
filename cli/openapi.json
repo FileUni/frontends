@@ -2882,6 +2882,52 @@
         ]
       }
     },
+    "/api/v1/file/admin/index-rebuild/{user_id}": {
+      "post": {
+        "tags": [
+          "crate::admin_handlers"
+        ],
+        "operationId": "admin_rebuild_index_for_user",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "description": "User ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IndexRebuildRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Resp"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "jwt": []
+          }
+        ]
+      }
+    },
     "/api/v1/file/admin/index-sync/{user_id}": {
       "post": {
         "tags": [
@@ -4350,6 +4396,30 @@
             "jwt": []
           }
         ]
+      }
+    },
+    "/api/v1/file/public/direct/{id}": {
+      "get": {
+        "tags": [
+          "crate::handlers::share"
+        ],
+        "operationId": "get_share_direct_root",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Share ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Direct share content retrieved successfully"
+          }
+        }
       }
     },
     "/api/v1/file/public/direct/{id}/{path}": {
@@ -10730,6 +10800,29 @@
           "skipped": {
             "type": "integer",
             "minimum": 0
+          }
+        }
+      },
+      "IndexRebuildRequest": {
+        "type": "object",
+        "properties": {
+          "max_directories": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "description": "Safety guard: maximum number of directories to process.\n\n- `None` or `0` means unlimited.\n- Default: 200000.",
+            "example": 200000,
+            "minimum": 0
+          },
+          "path": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Start directory path (logical path). Default: \"/\".",
+            "example": "/"
           }
         }
       },

@@ -7,7 +7,7 @@
     "build": "astro build",
     "preview": "astro preview",
     "check": "astro check",
-    "gen-api": "bunx openapi-typescript openapi.json -o src/types/api.ts"
+    "gen-api": "bunx openapi-typescript openapi.json -o src/types/api.ts && bunx openapi-typescript openapi-config-set.json -o src/types/config_set_api.ts"
   },
   "dependencies": {
     "@fileuni/shared": "workspace:*",

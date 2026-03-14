@@ -2,6 +2,8 @@ import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import '@/lib/i18n';
 import * as toml from 'smol-toml';
+import type { components as ApiComponents } from '@/types/api.ts';
+import type { components as ConfigSetComponents } from '@/types/config_set_api.ts';
 import {
   type ConfigError,
   type ConfigNoteEntry,
@@ -17,46 +19,22 @@ import {
 import { client, extractData, handleApiError } from '@/lib/api';
 import { CheckCircle, ShieldAlert, Languages, Sun, Moon, Monitor } from 'lucide-react';
 
-interface ConfigSetStatusResponse {
-  is_config_set_mode: boolean;
-  is_permitted: boolean;
-  message: string;
-}
-
-interface ConfigTemplateResponse {
-  current_config_path: string;
-  current_config_content: string;
-}
-
-interface ConfigNotesResponse {
-  notes: Record<string, ConfigNoteEntry>;
-}
-
-interface BackendCapabilitiesResponse {
-  runtime_os?: string;
-  is_config_set_mode?: boolean;
-}
-
-interface ConfigSetApplyResponse {
-  admin_username: string;
-  admin_action: string;
-  password_hint?: string | null;
-}
-
-type ConfigValidationError = {
-  message: string;
-  line?: number;
-  column?: number;
-  key?: string | null;
-};
+type ConfigSetStatusResponse = ConfigSetComponents['schemas']['ConfigSetStatusResponse'];
+type ConfigTemplateResponse = ConfigSetComponents['schemas']['ConfigTemplateResponse'];
+type ConfigNotesResponse = ConfigSetComponents['schemas']['ConfigNotesResponse'];
+type BackendCapabilitiesResponse = ApiComponents['schemas']['SystemCapabilities'];
+type ConfigSetApplyResponse = ConfigSetComponents['schemas']['ConfigSetApplyResponse'];
+type ConfigValidationError = ConfigSetComponents['schemas']['ConfigSetValidationError'];
 
 const isConfigValidationError = (value: unknown): value is ConfigValidationError => {
   if (typeof value !== 'object' || value === null) return false;
   const candidate = value as Record<string, unknown>;
   if (typeof candidate.message !== 'string') return false;
-  if (candidate.line !== undefined && typeof candidate.line !== 'number') return false;
-  if (candidate.column !== undefined && typeof candidate.column !== 'number') return false;
-  if (candidate.key !== undefined && candidate.key !== null && typeof candidate.key !== 'string') return false;
+  if (typeof candidate.line !== 'number') return false;
+  if (typeof candidate.column !== 'number') return false;
+  if (candidate.key !== undefined && candidate.key !== null && typeof candidate.key !== 'string') {
+    return false;
+  }
   return true;
 };
 
@@ -130,7 +108,7 @@ export const ConfigSetEditor: React.FC = () => {
       const data = await extractData<ConfigNotesResponse>(
         client.GET('/api/v1/config-set/notes')
       );
-      setNotes(data.notes || {});
+      setNotes(((data.notes ?? {}) as unknown) as Record<string, ConfigNoteEntry>);
     } catch (e) {
       console.error('Failed to fetch config notes', e);
     }
