@@ -14,6 +14,116 @@ import { useAuthStore } from '@/stores/auth.ts';
 
 type TaskStatusValue = 'pending' | 'running' | 'success' | 'failed' | 'interrupted';
 
+type TaskSseUpdateEvent = {
+  id: string;
+  progress?: number;
+  status?: TaskStatusValue;
+  message?: string | null;
+  updated_at?: string;
+};
+
+type SseFrame = {
+  event: string;
+  data: string;
+};
+
+const isRecord = (value: unknown): value is Record<string, unknown> => {
+  return typeof value === 'object' && value !== null;
+};
+
+const isTaskStatusValue = (value: unknown): value is TaskStatusValue => {
+  return (
+    value === 'pending' ||
+    value === 'running' ||
+    value === 'success' ||
+    value === 'failed' ||
+    value === 'interrupted'
+  );
+};
+
+const isTaskStatus = (value: unknown): value is TaskStatus => {
+  if (!isRecord(value)) return false;
+  return (
+    typeof value.id === 'string' &&
+    isTaskStatusValue(value.status) &&
+    typeof value.progress === 'number' &&
+    Number.isFinite(value.progress) &&
+    typeof value.created_at === 'string' &&
+    typeof value.updated_at === 'string'
+  );
+};
+
+const isTaskSseUpdateEvent = (value: unknown): value is TaskSseUpdateEvent => {
+  if (!isRecord(value)) return false;
+  if (typeof value.id !== 'string') return false;
+  if (value.progress !== undefined && (typeof value.progress !== 'number' || !Number.isFinite(value.progress))) {
+    return false;
+  }
+  if (value.status !== undefined && !isTaskStatusValue(value.status)) return false;
+  if (value.message !== undefined && value.message !== null && typeof value.message !== 'string') return false;
+  if (value.updated_at !== undefined && typeof value.updated_at !== 'string') return false;
+  return true;
+};
+
+const readSseStream = async (
+  response: Response,
+  signal: AbortSignal,
+  onFrame: (frame: SseFrame) => void,
+): Promise<void> => {
+  const reader = response.body?.getReader();
+  if (!reader) {
+    throw new Error('SSE stream is not readable in this environment');
+  }
+
+  const decoder = new TextDecoder();
+  let buffer = '';
+  let currentEvent = '';
+  let dataLines: string[] = [];
+
+  const flushFrame = () => {
+    const data = dataLines.join('\n');
+    if (data.length > 0 || currentEvent.length > 0) {
+      onFrame({ event: currentEvent, data });
+    }
+    currentEvent = '';
+    dataLines = [];
+  };
+
+  while (!signal.aborted) {
+    const { value, done } = await reader.read();
+    if (done) {
+      flushFrame();
+      return;
+    }
+
+    buffer += decoder.decode(value, { stream: true });
+    buffer = buffer.replace(/\r\n/g, '\n');
+
+    let newlineIndex: number;
+    while ((newlineIndex = buffer.indexOf('\n')) !== -1) {
+      const line = buffer.slice(0, newlineIndex);
+      buffer = buffer.slice(newlineIndex + 1);
+
+      if (line === '') {
+        flushFrame();
+        continue;
+      }
+      if (line.startsWith(':')) {
+        // Comment / keep-alive.
+        continue;
+      }
+      if (line.startsWith('event:')) {
+        currentEvent = line.slice('event:'.length).trim();
+        continue;
+      }
+      if (line.startsWith('data:')) {
+        dataLines.push(line.slice('data:'.length).trim());
+        continue;
+      }
+    }
+  }
+};
+
 type ApiResp<T> = {
   success: boolean;
   code: number;
@@ -60,6 +170,7 @@ export function BatchOperationProgress({
 }) {
   const { t } = useTranslation();
   const finishedOnceRef = useRef(false);
+  const taskStatusRef = useRef<TaskStatus | null>(null);
 
   const [taskStatus, setTaskStatus] = useState<TaskStatus | null>(null);
   const [statistics, setStatistics] = useState<BatchStatistics | null>(null);
@@ -72,66 +183,234 @@ export function BatchOperationProgress({
     if (!isOpen || !taskId) return undefined;
 
     finishedOnceRef.current = false;
+    taskStatusRef.current = null;
     setTaskStatus(null);
     setStatistics(null);
+    setShowFailedDetails(false);
+    setShowJsonReport(false);
+    setJsonReportData('');
     setLoading(true);
 
-    let intervalId: ReturnType<typeof setInterval> | null = null;
+    const abortController = new AbortController();
 
-    const fetchStatus = async () => {
-      try {
-        const { data: taskResp, error: taskError } = await client.GET(
-          '/api/v1/file/task/{id}',
-          { params: { path: { id: taskId } } },
-        );
+    let pollingIntervalId: ReturnType<typeof setInterval> | null = null;
+    let statsIntervalId: ReturnType<typeof setInterval> | null = null;
 
-        if (taskError || !taskResp?.success || !taskResp.data) return;
+    const isTerminal = (status: TaskStatusValue) => {
+      return status === 'success' || status === 'failed' || status === 'interrupted';
+    };
 
-        const task = taskResp.data as TaskStatus;
-        setTaskStatus(task);
-
-        if (
-          task.status === 'running' ||
-          task.status === 'success' ||
-          task.status === 'failed'
-        ) {
-          const { data: statsResp, error: statsError } = await client.GET(
-            '/api/v1/file/task/{id}/statistics',
-            { params: { path: { id: taskId } } },
-          );
-
-          if (!statsError && statsResp?.success && statsResp.data) {
-            setStatistics(statsResp.data as BatchStatistics);
-          }
-        }
-
-        if (
-          task.status === 'success' ||
-          task.status === 'failed' ||
-          task.status === 'interrupted'
-        ) {
-          if (intervalId) {
-            clearInterval(intervalId);
-            intervalId = null;
-          }
-
-          if (!finishedOnceRef.current) {
-            finishedOnceRef.current = true;
-            onFinished?.(task.status);
-          }
-        }
-      } catch (error) {
-        console.error('Error fetching task status:', error);
-      } finally {
-        setLoading(false);
+    const finishOnce = (status: TaskStatusValue) => {
+      if (!finishedOnceRef.current) {
+        finishedOnceRef.current = true;
+        onFinished?.(status);
       }
     };
 
-    fetchStatus();
-    intervalId = setInterval(fetchStatus, 2000);
+    const applySnapshot = (task: TaskStatus) => {
+      taskStatusRef.current = task;
+      setTaskStatus(task);
+      setLoading(false);
+      if (isTerminal(task.status)) {
+        if (statsIntervalId) {
+          clearInterval(statsIntervalId);
+          statsIntervalId = null;
+        }
+        finishOnce(task.status);
+      }
+    };
+
+    const applyUpdate = (update: TaskSseUpdateEvent) => {
+      const prev = taskStatusRef.current;
+      if (!prev) return;
+      const next: TaskStatus = {
+        ...prev,
+        ...(typeof update.progress === 'number' ? { progress: update.progress } : {}),
+        ...(update.status ? { status: update.status } : {}),
+        ...(update.message !== undefined ? { message: update.message } : {}),
+        ...(typeof update.updated_at === 'string' ? { updated_at: update.updated_at } : {}),
+      };
+      taskStatusRef.current = next;
+      setTaskStatus(next);
+      if (isTerminal(next.status)) {
+        if (statsIntervalId) {
+          clearInterval(statsIntervalId);
+          statsIntervalId = null;
+        }
+        finishOnce(next.status);
+      }
+    };
+
+    const fetchStatistics = async () => {
+      if (!taskId) return;
+      const current = taskStatusRef.current;
+      if (!current) return;
+      if (current.status !== 'running' && current.status !== 'success' && current.status !== 'failed') {
+        return;
+      }
+
+      try {
+        const { data: statsResp, error: statsError } = await client.GET(
+          '/api/v1/file/task/{id}/statistics',
+          { params: { path: { id: taskId } } },
+        );
+
+        if (!statsError && statsResp?.success && statsResp.data) {
+          setStatistics(statsResp.data as BatchStatistics);
+        }
+      } catch (error) {
+        console.error('Error fetching task statistics:', error);
+      }
+    };
+
+    const startStatisticsPolling = () => {
+      if (statsIntervalId) return;
+      void fetchStatistics();
+      statsIntervalId = setInterval(fetchStatistics, 2000);
+    };
+
+    const stopPollingTimers = () => {
+      if (pollingIntervalId) {
+        clearInterval(pollingIntervalId);
+        pollingIntervalId = null;
+      }
+      if (statsIntervalId) {
+        clearInterval(statsIntervalId);
+        statsIntervalId = null;
+      }
+    };
+
+    const startPollingFallback = () => {
+      if (pollingIntervalId) return;
+
+      const fetchStatus = async () => {
+        try {
+          const { data: taskResp, error: taskError } = await client.GET(
+            '/api/v1/file/task/{id}',
+            { params: { path: { id: taskId } } },
+          );
+          if (taskError || !taskResp?.success || !taskResp.data) return;
+          const task = taskResp.data as TaskStatus;
+          applySnapshot(task);
+
+          if (task.status === 'running' || task.status === 'success' || task.status === 'failed') {
+            await fetchStatistics();
+          }
+
+          if (isTerminal(task.status)) {
+            stopPollingTimers();
+          }
+        } catch (error) {
+          console.error('Error fetching task status:', error);
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      void fetchStatus();
+      pollingIntervalId = setInterval(fetchStatus, 2000);
+    };
+
+    const startSse = async () => {
+      let receivedSnapshot = false;
+      let reachedTerminal = false;
+
+      try {
+        const { currentUserData } = useAuthStore.getState();
+        const headers: Record<string, string> = {
+          'Accept': 'text/event-stream',
+        };
+        if (currentUserData?.access_token) {
+          headers['Authorization'] = `Bearer ${currentUserData.access_token}`;
+        }
+
+        const response = await fetch(
+          `${BASE_URL}/api/v1/file/task/${taskId}/events`,
+          { headers, signal: abortController.signal },
+        );
+        if (!response.ok) {
+          throw new Error(`SSE request failed: ${response.status}`);
+        }
+
+        await readSseStream(response, abortController.signal, (frame) => {
+          if (abortController.signal.aborted) return;
+          if (frame.event === 'snapshot') {
+            const parsed = JSON.parse(frame.data) as unknown;
+            if (isTaskStatus(parsed)) {
+              receivedSnapshot = true;
+              const terminal = isTerminal(parsed.status);
+              applySnapshot(parsed);
+              reachedTerminal = terminal;
+              if (terminal) {
+                void fetchStatistics();
+              } else {
+                startStatisticsPolling();
+              }
+            }
+            return;
+          }
+          if (frame.event === 'update') {
+            const parsed = JSON.parse(frame.data) as unknown;
+            if (isTaskSseUpdateEvent(parsed)) {
+              applyUpdate(parsed);
+              const current = taskStatusRef.current;
+              if (current && isTerminal(current.status)) {
+                reachedTerminal = true;
+                if (current.status === 'success' || current.status === 'failed') {
+                  void fetchStatistics();
+                }
+              }
+            }
+            return;
+          }
+          if (frame.event === 'resync') {
+            // Server indicates the SSE receiver lagged; refresh snapshot once.
+            void (async () => {
+              try {
+                const { data: taskResp, error: taskError } = await client.GET(
+                  '/api/v1/file/task/{id}',
+                  { params: { path: { id: taskId } } },
+                );
+                if (taskError || !taskResp?.success || !taskResp.data) return;
+                const task = taskResp.data as TaskStatus;
+                applySnapshot(task);
+              } catch {
+                // Ignore resync failures; polling fallback may recover.
+              }
+            })();
+          }
+        });
+
+        if (!abortController.signal.aborted) {
+          const current = taskStatusRef.current;
+          reachedTerminal = reachedTerminal || (current ? isTerminal(current.status) : false);
+          if (!reachedTerminal) {
+            throw new Error('SSE stream ended before task finished');
+          }
+        }
+      } catch (error) {
+        if (abortController.signal.aborted) return;
+        console.warn('SSE stream failed, falling back to polling:', error);
+
+        // If SSE fails mid-task, ensure we don’t double-poll statistics.
+        if (statsIntervalId) {
+          clearInterval(statsIntervalId);
+          statsIntervalId = null;
+        }
+
+        // If we never received the snapshot, ensure the UI can recover.
+        if (!receivedSnapshot) {
+          setLoading(true);
+        }
+        startPollingFallback();
+      }
+    };
+
+    void startSse();
 
     return () => {
-      if (intervalId) clearInterval(intervalId);
+      abortController.abort();
+      stopPollingTimers();
     };
   }, [isOpen, taskId, onFinished]);
 

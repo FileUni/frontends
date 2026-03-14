@@ -216,39 +216,39 @@ export const ExtensionManagerAdmin = () => {
   const description = currentTool ? (lang === 'en' ? currentTool.description_en : currentTool.description_zh) : '';
 
   return (
-    <div className="space-y-6 pb-20">
-      <div className="rounded-[2rem] border border-border bg-gradient-to-r from-primary/10 via-primary/5 to-transparent p-6 shadow-sm">
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div className="flex items-center gap-4 group">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/20 text-primary group-hover:scale-110 transition-transform duration-500 shadow-inner">
-              <Puzzle size={24} />
+    <div className="space-y-4 sm:space-y-6 pb-10 sm:pb-20">
+      <div className="rounded-xl sm:rounded-[1.5rem] md:rounded-[2rem] border border-border bg-gradient-to-r from-primary/10 via-primary/5 to-transparent p-4 sm:p-5 md:p-6 shadow-sm">
+        <div className="flex flex-col gap-3 sm:gap-4 md:flex-row md:items-center md:justify-between">
+          <div className="flex items-center gap-3 sm:gap-4 group">
+            <div className="flex h-10 w-10 sm:h-11 sm:w-11 md:h-12 md:w-12 items-center justify-center rounded-xl sm:rounded-[1.25rem] md:rounded-2xl bg-primary/20 text-primary group-hover:scale-110 transition-transform duration-500 shadow-inner">
+              <Puzzle size={18} className="sm:w-5 sm:h-5 md:w-6 md:h-6" />
             </div>
             <div>
-              <h2 className="text-2xl font-black tracking-tight">{t("admin.extensions.title")}</h2>
-              <p className="text-sm font-bold opacity-60 uppercase tracking-wider">{t("admin.extensions.subtitle") || 'Extension & Plugin Infrastructure'}</p>
+              <h2 className="text-lg sm:text-xl md:text-2xl font-black tracking-tight">{t("admin.extensions.title")}</h2>
+              <p className="text-xs sm:text-sm font-bold opacity-60 uppercase tracking-wider">{t("admin.extensions.subtitle") || 'Extension & Plugin Infrastructure'}</p>
             </div>
           </div>
-          <Badge variant="outline" className="h-10 px-4 rounded-2xl border-white/10 bg-white/5 opacity-60 flex gap-3 items-center backdrop-blur-md">
-            <Cpu size={16} className="opacity-40" />
-            <span className="font-mono text-sm uppercase font-black tracking-widest">{capabilities?.runtime_os || 'linux'} / {capabilities?.runtime_arch || 'x86_64'}</span>
+          <Badge variant="outline" className="h-8 sm:h-9 md:h-10 px-3 sm:px-4 rounded-xl sm:rounded-2xl border-white/10 bg-white/5 opacity-60 flex gap-2 sm:gap-3 items-center backdrop-blur-md self-start sm:self-auto whitespace-nowrap">
+            <Cpu size={14} className="opacity-40 sm:w-4 sm:h-4" />
+            <span className="font-mono text-xs sm:text-sm uppercase font-black tracking-widest">{capabilities?.runtime_os || 'linux'} / {capabilities?.runtime_arch || 'x86_64'}</span>
           </Badge>
         </div>
       </div>
 
-      <div className="p-2 bg-white/[0.03] rounded-[2rem] border border-white/5 flex gap-2 flex-wrap shadow-2xl backdrop-blur-sm mx-1">
+      <div className="p-1.5 sm:p-2 bg-white/[0.03] rounded-xl sm:rounded-[1.5rem] md:rounded-[2rem] border border-white/5 flex gap-1.5 sm:gap-2 flex-wrap justify-center sm:justify-start shadow-xl md:shadow-2xl backdrop-blur-sm mx-0 sm:mx-1">
         {extItems.map((item) => (
           <Button 
             key={item.key} 
             size="sm" 
             variant={extPage === item.key ? 'primary' : 'ghost'} 
             onClick={() => navigate({ mod: 'admin', page: 'extensions', ext: item.key })}
-            className={`relative rounded-2xl px-8 h-12 font-black uppercase tracking-widest text-[14px] transition-all duration-300 ${extPage === item.key ? 'shadow-xl shadow-primary/30' : 'opacity-40 hover:opacity-100 hover:bg-white/5'}`}
+            className={`relative rounded-lg sm:rounded-xl md:rounded-2xl px-4 sm:px-6 md:px-8 h-9 sm:h-10 md:h-12 font-black uppercase tracking-widest text-xs sm:text-sm md:text-[14px] transition-all duration-300 ${extPage === item.key ? 'shadow-lg sm:shadow-xl md:shadow-xl shadow-primary/30' : 'opacity-40 hover:opacity-100 hover:bg-white/5'}`}
           >
             {item.label}
             {item.installed && (
-              <span className="absolute -top-1 -right-1 flex h-3 w-3">
+              <span className="absolute -top-0.5 -right-0.5 sm:-top-1 sm:-right-1 flex h-2 w-2 sm:h-2.5 sm:w-2.5 md:h-3 md:w-3">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500 shadow-sm shadow-green-500/50"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 sm:h-2.5 sm:w-2.5 md:h-3 md:w-3 bg-green-500 shadow-sm shadow-green-500/50"></span>
               </span>
             )}
           </Button>

@@ -1081,6 +1081,357 @@
         ]
       }
     },
+    "/api/v1/admin/system/config": {
+      "get": {
+        "tags": [
+          "crate::admin::handler"
+        ],
+        "operationId": "get_all_configs",
+        "responses": {
+          "200": {
+            "description": "Get full configuration",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Resp"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Permission denied",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Resp"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Resp"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "jwt": []
+          }
+        ]
+      },
+      "put": {
+        "tags": [
+          "crate::admin::handler"
+        ],
+        "operationId": "update_config",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateConfigReq"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Configuration updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Resp"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Resp"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Permission denied",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Resp"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "jwt": []
+          }
+        ]
+      }
+    },
+    "/api/v1/admin/system/config/notes": {
+      "get": {
+        "tags": [
+          "crate::admin::handler"
+        ],
+        "operationId": "get_config_notes",
+        "responses": {
+          "200": {
+            "description": "Get config notes",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Resp"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Permission denied",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Resp"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Resp"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "jwt": []
+          }
+        ]
+      }
+    },
+    "/api/v1/admin/system/config/raw": {
+      "get": {
+        "tags": [
+          "crate::admin::handler"
+        ],
+        "operationId": "get_config_raw",
+        "responses": {
+          "200": {
+            "description": "Get raw configuration",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Resp"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Permission denied",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Resp"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Resp"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "jwt": []
+          }
+        ]
+      },
+      "put": {
+        "tags": [
+          "crate::admin::handler"
+        ],
+        "operationId": "update_config_raw",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateConfigRawReq"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Configuration updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Resp"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Resp"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Permission denied",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Resp"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "jwt": []
+          }
+        ]
+      }
+    },
+    "/api/v1/admin/system/config/reload": {
+      "post": {
+        "tags": [
+          "crate::admin::handler"
+        ],
+        "operationId": "config_reload",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConfigOpReq"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Configuration reloaded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Resp"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Configuration reload failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Resp"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Permission denied",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Resp"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "jwt": []
+          }
+        ]
+      }
+    },
+    "/api/v1/admin/system/config/test": {
+      "post": {
+        "tags": [
+          "crate::admin::handler"
+        ],
+        "operationId": "config_test",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConfigOpReq"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Configuration test passed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Resp"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Configuration test failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Resp"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Permission denied",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Resp"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "jwt": []
+          }
+        ]
+      }
+    },
     "/api/v1/admin/web/reload": {
       "post": {
         "tags": [
@@ -2372,61 +2723,6 @@
             "description": "Message not found"
           }
         }
-      }
-    },
-    "/api/v1/file-manager/preview/latex": {
-      "post": {
-        "tags": [
-          "File Manager Preview"
-        ],
-        "operationId": "preview_latex",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/LatexRenderRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "LaTeX rendered successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/LatexRenderResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid request or render failed",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Resp"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Resp"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "jwt": []
-          }
-        ]
       }
     },
     "/api/v1/file/admin/file-manager/task/{id}/continue": {
@@ -4001,6 +4297,61 @@
         ]
       }
     },
+    "/api/v1/file/preview/latex": {
+      "post": {
+        "tags": [
+          "File Manager Preview"
+        ],
+        "operationId": "preview_latex",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LatexRenderRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "LaTeX rendered successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LatexRenderResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request or render failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Resp"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Resp"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "jwt": []
+          }
+        ]
+      }
+    },
     "/api/v1/file/public/direct/{id}/{path}": {
       "get": {
         "tags": [
@@ -5062,6 +5413,43 @@
           },
           "500": {
             "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "jwt": []
+          }
+        ]
+      }
+    },
+    "/api/v1/file/task/{id}/events": {
+      "get": {
+        "tags": [
+          "FileManager: Task"
+        ],
+        "summary": "Watch task status updates via Server-Sent Events (SSE)",
+        "operationId": "watch_task_events",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Task ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "SSE stream: initial snapshot + incremental task updates"
+          },
+          "403": {
+            "description": "Permission denied"
+          },
+          "404": {
+            "description": "Task not found"
           }
         },
         "security": [
@@ -8197,247 +8585,6 @@
           }
         }
       }
-    },
-    "/config": {
-      "get": {
-        "tags": [
-          "crate::admin::handler"
-        ],
-        "operationId": "get_all_configs",
-        "responses": {
-          "200": {
-            "description": "Get full configuration",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Resp"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Permission denied",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Resp"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal server error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Resp"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "jwt": []
-          }
-        ]
-      },
-      "put": {
-        "tags": [
-          "crate::admin::handler"
-        ],
-        "operationId": "update_config",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateConfigReq"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Configuration updated successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Resp"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Resp"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Permission denied",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Resp"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "jwt": []
-          }
-        ]
-      }
-    },
-    "/config/notes": {
-      "get": {
-        "tags": [
-          "crate::admin::handler"
-        ],
-        "operationId": "get_config_notes",
-        "responses": {
-          "200": {
-            "description": "Get config notes",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Resp"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Permission denied",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Resp"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal server error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Resp"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "jwt": []
-          }
-        ]
-      }
-    },
-    "/config/raw": {
-      "get": {
-        "tags": [
-          "crate::admin::handler"
-        ],
-        "operationId": "get_config_raw",
-        "responses": {
-          "200": {
-            "description": "Get raw configuration",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Resp"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Permission denied",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Resp"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal server error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Resp"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "jwt": []
-          }
-        ]
-      },
-      "put": {
-        "tags": [
-          "crate::admin::handler"
-        ],
-        "operationId": "update_config_raw",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateConfigRawReq"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Configuration updated successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Resp"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Resp"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Permission denied",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Resp"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "jwt": []
-          }
-        ]
-      }
     }
   },
   "components": {
@@ -9770,6 +9917,18 @@
           }
         }
       },
+      "ConfigOpReq": {
+        "type": "object",
+        "required": [
+          "toml_content"
+        ],
+        "properties": {
+          "toml_content": {
+            "type": "string",
+            "description": "Real-time editor content"
+          }
+        }
+      },
       "ConfigRawResponse": {
         "type": "object",
         "required": [
@@ -9784,6 +9943,32 @@
           "toml_content": {
             "type": "string",
             "description": "Raw TOML content"
+          }
+        }
+      },
+      "ConfigReloadResponse": {
+        "type": "object",
+        "description": "Config reload response",
+        "required": [
+          "message"
+        ],
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "Result message"
+          }
+        }
+      },
+      "ConfigTestResponse": {
+        "type": "object",
+        "description": "Config test response",
+        "required": [
+          "message"
+        ],
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "Result message"
           }
         }
       },

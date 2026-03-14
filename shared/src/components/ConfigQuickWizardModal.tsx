@@ -802,6 +802,48 @@ const deepClone = <T,>(value: T): T => {
   return JSON.parse(JSON.stringify(value)) as T;
 };
 
+const ensureVfsLocalStorageDefaults = (vfsHub: ConfigObject): void => {
+  const defaultConnectorName = 'local-fs';
+  const defaultPoolName = 'default-pool';
+  const defaultRoot = '{APPDATADIR}/vfs';
+
+  const connectors = vfsHub.connectors;
+  if (!Array.isArray(connectors) || connectors.length === 0) {
+    vfsHub.connectors = [
+      {
+        name: defaultConnectorName,
+        driver: 'fs',
+        root: defaultRoot,
+        enable: true,
+        options: {},
+      },
+    ];
+  }
+
+  const pools = vfsHub.pools;
+  if (!Array.isArray(pools) || pools.length === 0) {
+    vfsHub.pools = [
+      {
+        name: defaultPoolName,
+        primary_connector: defaultConnectorName,
+        backup_connector: defaultConnectorName,
+        enable_write_cache: false,
+        enable: true,
+        options: {},
+      },
+    ];
+  }
+
+  if (!Array.isArray(vfsHub.policies)) {
+    vfsHub.policies = [];
+  }
+
+  const defaultPool = vfsHub.default_pool;
+  if (typeof defaultPool !== 'string' || defaultPool.trim().length === 0) {
+    vfsHub.default_pool = defaultPoolName;
+  }
+};
+
 const toStringValue = (value: unknown, fallback: string): string => {
   return typeof value === 'string' ? value : fallback;
 };
@@ -1164,6 +1206,7 @@ const applyDraftToConfig = (base: ConfigObject, draft: FriendlyDraft, recommende
     vfsHub.enable_sftp = effectiveFeatures.sftp;
     vfsHub.enable_ftp = effectiveFeatures.ftp;
     vfsHub.enable_s3 = effectiveFeatures.s3;
+    ensureVfsLocalStorageDefaults(vfsHub);
 
     const fileCompress = ensureRecord(vfsHub, 'file_compress');
     fileCompress.enable = effectiveFeatures.compression;

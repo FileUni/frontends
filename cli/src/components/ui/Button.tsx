@@ -30,7 +30,7 @@ export const Button = React.forwardRef<
     <button
       ref={ref}
       className={cn(
-        'inline-flex items-center justify-center font-black transition-all disabled:opacity-50 disabled:pointer-events-none',
+        'inline-flex items-center justify-center font-black transition-all disabled:opacity-50 disabled:pointer-events-none whitespace-nowrap',
         variants[variant],
         sizes[size],
         className
