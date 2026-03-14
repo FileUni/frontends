@@ -43,7 +43,7 @@ export const TaskAdmin = () => {
 
   const fetchTasks = useCallback(async () => {
     try {
-      const { data: res } = await client.POST('/api/v1/admin/tasks/query', {
+      const { data: res } = await client.POST('/api/v1/admin/system/tasks/query', {
         body: {
           page,
           page_size: pageSize,
@@ -60,7 +60,7 @@ export const TaskAdmin = () => {
 
   const fetchScheduledJobs = useCallback(async () => {
     try {
-      const { data: res } = await client.GET('/api/v1/admin/tasks/scheduled');
+      const { data: res } = await client.GET('/api/v1/admin/system/tasks/scheduled');
       if (res?.success && res.data) {
         setScheduledJobs(res.data);
       }
@@ -82,7 +82,7 @@ export const TaskAdmin = () => {
   const handleCancelTask = async (id: string) => {
     if (!confirm(t('admin.tasks.cancel_confirm') || 'Are you sure you want to cancel this task?')) return;
     try {
-      const { data: res } = await client.POST('/api/v1/admin/tasks/cancel/{id}', {
+      const { data: res } = await client.POST('/api/v1/admin/system/tasks/cancel/{id}', {
         params: { path: { id } }
       });
       if (res?.success) {

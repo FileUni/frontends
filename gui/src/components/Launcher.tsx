@@ -410,10 +410,24 @@ export default function Launcher() {
   const handleSaveConfig = async () => {
     setConfigBusy(true);
     try {
-      await safeInvoke<void>('save_and_reload_config', { content: configContent });
-      toast.success(t('admin.config.reloadSuccess'));
+      // Always validate with structured errors first so users can jump to the exact line.
+      const errors = await safeInvoke<ConfigError[]>('test_config', { content: configContent });
+      if (errors.length > 0) {
+        toast.error(t('launcher.messages.config_test_failed'));
+        setConfigErrors(errors);
+        setConfigSummary(t('launcher.messages.config_test_failed'));
+        setConfigSummaryLevel('error');
+        return;
+      }
+
+      setConfigErrors([]);
+
+      // GUI config editing happens while the service is stopped.
+      // Persist to disk; changes take effect on next start.
+      await safeInvoke<void>('save_config', { content: configContent });
+      toast.success(t('launcher.messages.config_saved'));
       setSavedConfigContent(configContent);
-      setConfigSummary(t('admin.config.reloadSuccess'));
+      setConfigSummary(t('launcher.messages.config_saved'));
       setConfigSummaryLevel('success');
       setConfigErrors([]);
     } catch (e: unknown) {
@@ -739,6 +753,18 @@ export default function Launcher() {
   const handleFinalizeSetup = async () => {
     setConfigBusy(true);
     try {
+      // Enforce the same structured validation model used by "Test".
+      const errors = await safeInvoke<ConfigError[]>('test_config', { content: configContent });
+      if (errors.length > 0) {
+        toast.error(t('launcher.messages.config_test_failed'));
+        setConfigErrors(errors);
+        setConfigSummary(t('launcher.messages.config_test_failed'));
+        setConfigSummaryLevel('error');
+        return;
+      }
+
+      setConfigErrors([]);
+
       await handleApplySetup(pendingAdminPassword);
     } catch (e: unknown) {
       toast.error(extractErrorMessage(e));
@@ -1251,6 +1277,7 @@ export default function Launcher() {
               onChange={setConfigContent}
               onTest={handleTestConfig}
               onSave={handleSaveConfig}
+              saveLabel={t('launcher.save_config')}
               onCancel={handleResetToSavedConfig}
               onClearValidationErrors={() => setConfigErrors([])}
               showCancel={false}

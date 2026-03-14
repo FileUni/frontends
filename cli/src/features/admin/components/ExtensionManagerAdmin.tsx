@@ -259,6 +259,7 @@ export const ExtensionManagerAdmin = () => {
         tool={extPage}
         kind={currentTool?.kind || 'service'}
         installed={currentTool?.installed || false}
+        executablePath={currentTool?.executable_path}
         installDir={currentTool?.install_dir}
         binPathConfig={currentTool?.bin_path}
         homepage={currentTool?.homepage || ''}

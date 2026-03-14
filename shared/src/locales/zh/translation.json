@@ -636,6 +636,7 @@
     "switchToRawJson": "切换到原始 JSON 模式",
     "on": "开",
     "off": "关",
+    "na": "N/A",
     "menu": "菜单",
     "brandName": "FileUni",
     "logoAlt": "FileUni 标志",
@@ -1658,8 +1659,9 @@
     },
     "fs": {
       "storage_stats": "存储统计",
-      "cluster_storage": "集群总存储",
-      "usage_efficiency": "使用效率",
+      "cluster_storage": "集群已用存储",
+      "usage_efficiency": "配额使用率",
+      "total_users": "用户总数",
       "active_maintenance": "活跃维护中",
       "storage_types": "存储后端类型",
       "engine_distribution": "引擎分布",
@@ -1667,6 +1669,11 @@
       "global_ops_desc": "注意：这些操作影响整个集群，仅应在维护窗口执行。",
       "sync_index": "同步全局索引",
       "sync_success": "全局索引同步任务已启动",
+      "sync_user_index": "同步用户索引",
+      "sync_user_index_desc": "按用户触发索引同步（对目标用户根目录 / 执行一次 sync_index）。",
+      "user_id_placeholder": "用户 ID (UUID)",
+      "user_id_required": "请输入用户 ID",
+      "sync_user_success": "已启动用户 {{user_id}} 的索引同步任务 (task_id={{task_id}})",
       "emergency_control": "紧急枢纽控制",
       "emergency_desc": "警告：这些操作绕过正常 VFS 安全检查，可能导致数据不一致。",
       "force_unlock": "强制全局解锁",
@@ -1674,7 +1681,8 @@
       "unlock_success": "强制解锁指令已下达",
       "locked_users": "被锁定用户 (正在执行 WAL 恢复)",
       "system_status": "系统状态",
-      "no_locked_users": "当前没有被锁定的用户"
+      "no_locked_users": "当前没有被锁定的用户",
+      "maintenance_status_unavailable": "维护状态不可用（接口异常或权限不足）"
     },
     "perms": {
       "title": "访问治理",

@@ -6,7 +6,7 @@
     "license": {
       "name": ""
     },
-    "version": "0.0.2-alpha2"
+    "version": "0.0.2-alpha4"
   },
   "paths": {
     "/api/v1/admin/domain-acme-ddns/assets/certs": {
@@ -2586,7 +2586,43 @@
         ]
       }
     },
-    "/api/v1/file/admin/locked-users": {
+    "/api/v1/file/admin/index-sync/{user_id}": {
+      "post": {
+        "tags": [
+          "crate::admin_handlers"
+        ],
+        "operationId": "admin_sync_index_for_user",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "description": "User ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Resp"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "jwt": []
+          }
+        ]
+      }
+    },
+    "/api/v1/file/admin/maintenance/locked-users": {
       "get": {
         "tags": [
           "crate::admin_handlers"
@@ -2611,7 +2647,7 @@
         ]
       }
     },
-    "/api/v1/file/admin/maintenance-status": {
+    "/api/v1/file/admin/maintenance/status": {
       "get": {
         "tags": [
           "crate::admin_handlers"

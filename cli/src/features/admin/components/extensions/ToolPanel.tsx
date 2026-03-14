@@ -19,6 +19,7 @@ export type ToolProps = {
   tool: string;
   kind: ToolKind;
   installed: boolean;
+  executablePath?: string;
   installDir?: string;
   binPathConfig?: string;
   homepage: string;
@@ -73,6 +74,24 @@ export const ToolPanel = (props: ToolProps) => {
   const [installModalOpen, setInstallModalOpen] = useState(false);
   const [highlightInstall, setHighlightInstall] = useState(false);
 
+  const execDisplayPath = (() => {
+    if (props.executablePath) return props.executablePath;
+    const binPath = props.binPathConfig;
+    const installDir = props.installDir;
+    if (!binPath && !installDir) return '';
+    if (!binPath) return installDir || '';
+
+    // Absolute path (Unix/Windows) should not be prefixed.
+    const isAbs =
+      binPath.startsWith('/') ||
+      /^\\\\/.test(binPath) ||
+      /^[a-zA-Z]:[\\/]/.test(binPath);
+    if (isAbs) return binPath;
+
+    if (!installDir) return binPath;
+    return `${installDir.replace(/\/+$/, '')}/${binPath.replace(/^\/+/, '')}`;
+  })();
+
   const handleExtraAction = async (action: NonNullable<ToolProps['extraActions']>[number]) => {
     try {
       const result = await action.onClick();
@@ -118,9 +137,9 @@ export const ToolPanel = (props: ToolProps) => {
                   </Badge>
                 )}
               </div>
-              {props.installDir && (
+              {execDisplayPath && (
                 <p className="text-base font-mono opacity-60 flex items-center gap-2.5 uppercase font-bold tracking-tight">
-                  <Terminal size={18} /> {props.installDir}/{props.binPathConfig}
+                  <Terminal size={18} /> {execDisplayPath}
                 </p>
               )}
               <p className="text-base opacity-50 font-bold uppercase tracking-[0.2em]">{props.tool === 'openlist' ? 'OpenList' : props.tool} {t('admin.extensions.management')}</p>

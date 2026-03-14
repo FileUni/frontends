@@ -588,6 +588,7 @@
     "switchToRawJson": "Switch to Raw JSON Mode",
     "on": "ON",
     "off": "OFF",
+    "na": "N/A",
     "menu": "Menu",
     "brandName": "FileUni",
     "logoAlt": "FileUni Logo",
@@ -1640,8 +1641,9 @@
     },
     "fs": {
       "storage_stats": "Storage Stats",
-      "cluster_storage": "Cluster Storage",
-      "usage_efficiency": "Usage Efficiency",
+      "cluster_storage": "Cluster Used Storage",
+      "usage_efficiency": "Quota Utilization",
+      "total_users": "Total Users",
       "active_maintenance": "Active Maintenance",
       "storage_types": "Storage Types",
       "engine_distribution": "Engine Distribution",
@@ -1649,6 +1651,11 @@
       "global_ops_desc": "Caution: These actions affect the entire cluster and should only be performed during maintenance windows.",
       "sync_index": "Sync Global Index",
       "sync_success": "Global index sync task started",
+      "sync_user_index": "Sync User Index",
+      "sync_user_index_desc": "Trigger index sync for a specific user (runs sync_index on user root '/').",
+      "user_id_placeholder": "User ID (UUID)",
+      "user_id_required": "User ID is required",
+      "sync_user_success": "Started index sync for user {{user_id}} (task_id={{task_id}})",
       "emergency_control": "Emergency Hub Control",
       "emergency_desc": "Caution: These actions bypass normal VFS safety checks and may lead to data inconsistency.",
       "force_unlock": "Force Global Unlock",
@@ -1656,7 +1663,8 @@
       "unlock_success": "Force unlock command sent",
       "locked_users": "Locked Users (Under WAL Recovery)",
       "system_status": "System Status",
-      "no_locked_users": "No users currently locked"
+      "no_locked_users": "No users currently locked",
+      "maintenance_status_unavailable": "Maintenance status unavailable (API error or insufficient permission)"
     },
     "perms": {
       "title": "Access Governance",

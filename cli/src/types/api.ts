@@ -1108,7 +1108,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/file/admin/locked-users": {
+    "/api/v1/file/admin/index-sync/{user_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["admin_sync_index_for_user"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/file/admin/maintenance/locked-users": {
         parameters: {
             query?: never;
             header?: never;
@@ -1124,7 +1140,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/file/admin/maintenance-status": {
+    "/api/v1/file/admin/maintenance/status": {
         parameters: {
             query?: never;
             header?: never;
@@ -6329,6 +6345,28 @@ export interface operations {
             query?: never;
             header?: never;
             path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Resp"];
+                };
+            };
+        };
+    };
+    admin_sync_index_for_user: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User ID */
+                user_id: string;
+            };
             cookie?: never;
         };
         requestBody?: never;
