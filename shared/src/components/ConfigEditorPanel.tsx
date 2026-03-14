@@ -1,12 +1,13 @@
 import React from 'react';
 import { cn } from '../lib/utils';
-import { ConfigRawEditor, type ConfigError, type ConfigNoteEntry } from './ConfigRawEditor';
+import { ConfigRawEditor, type ConfigError, type ConfigNoteEntry, type EditorJumpPosition } from './ConfigRawEditor';
 
 interface ConfigEditorPanelProps {
   configPath?: string | null;
   content: string;
   notes: Record<string, ConfigNoteEntry>;
   errors: ConfigError[];
+  jumpTo?: EditorJumpPosition | null;
   loading: boolean;
   saveDisabled?: boolean;
   onChange: (value: string) => void;
@@ -27,6 +28,7 @@ export const ConfigEditorPanel: React.FC<ConfigEditorPanelProps> = ({
   content,
   notes,
   errors,
+  jumpTo,
   loading,
   saveDisabled = false,
   onChange,
@@ -111,6 +113,7 @@ export const ConfigEditorPanel: React.FC<ConfigEditorPanelProps> = ({
           onChange={onChange}
           notes={notes}
           errors={errors}
+          jumpTo={jumpTo}
           height="100%"
           isDark={isDark}
         />

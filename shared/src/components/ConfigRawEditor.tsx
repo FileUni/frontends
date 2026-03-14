@@ -26,12 +26,18 @@ export interface ConfigError {
   key?: string | null;
 }
 
+export interface EditorJumpPosition {
+  line: number;
+  column?: number;
+}
+
 interface ConfigRawEditorProps {
   content: string;
   onChange: (value: string) => void;
   embeddedTemplate?: string;
   notes: Record<string, ConfigNoteEntry>;
   errors?: ConfigError[];
+  jumpTo?: EditorJumpPosition | null;
   height?: string;
   activePath?: string;
   hideNotes?: boolean;
@@ -156,6 +162,7 @@ export const ConfigRawEditor: React.FC<ConfigRawEditorProps> = ({
   onChange,
   embeddedTemplate,
   notes,
+  jumpTo,
   height = "600px",
   activePath: externalActivePath,
   hideNotes = false,
@@ -164,6 +171,7 @@ export const ConfigRawEditor: React.FC<ConfigRawEditorProps> = ({
   const { t, i18n } = useTranslation();
   const editorRef = useRef<MonacoEditor.IStandaloneCodeEditor | null>(null);
   const monacoRef = useRef<MonacoModule | null>(null);
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const [internalActivePath, setInternalActivePath] = useState("");
   const decorationCollectionRef = useRef<MonacoEditor.IEditorDecorationsCollection | null>(null);
   const monacoStatus = useMonacoReady();
@@ -237,6 +245,75 @@ export const ConfigRawEditor: React.FC<ConfigRawEditorProps> = ({
     }
     return undefined;
   }, [externalActivePath, content]);
+
+  useEffect(() => {
+    if (!jumpTo || jumpTo.line <= 0) {
+      return;
+    }
+
+    const line = jumpTo.line;
+    const col = typeof jumpTo.column === "number" && jumpTo.column > 0 ? jumpTo.column : 1;
+
+    if (!useFallbackEditor && editorRef.current) {
+      const editor = editorRef.current;
+      editor.revealLineInCenter(line, 0);
+
+      const model = editor.getModel();
+      if (!model) return;
+
+      const maxCol = model.getLineMaxColumn(line);
+      const safeCol = Math.min(col, Math.max(1, maxCol));
+
+      editor.setSelection({
+        startLineNumber: line,
+        startColumn: safeCol,
+        endLineNumber: line,
+        endColumn: maxCol,
+      });
+      editor.focus();
+
+      if (decorationCollectionRef.current) {
+        decorationCollectionRef.current.clear();
+      }
+      decorationCollectionRef.current = editor.createDecorationsCollection([
+        {
+          range: {
+            startLineNumber: line,
+            startColumn: 1,
+            endLineNumber: line,
+            endColumn: 1,
+          },
+          options: {
+            isWholeLine: true,
+            className: "bg-primary/20",
+            marginClassName: "bg-primary/40",
+          },
+        },
+      ]);
+      const timer = window.setTimeout(() => {
+        decorationCollectionRef.current?.clear();
+      }, 2500);
+      return () => window.clearTimeout(timer);
+    }
+
+    // Fallback editor: best-effort selection to force scroll.
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+
+    const lines = content.split(/\r?\n/);
+    const targetLine = Math.min(line, Math.max(1, lines.length));
+    let lineStart = 0;
+    for (let i = 0; i < targetLine - 1; i += 1) {
+      lineStart += (lines[i]?.length ?? 0) + 1; // +1 for '\n'
+    }
+    const lineText = lines[targetLine - 1] ?? "";
+    const lineEnd = lineStart + lineText.length;
+    const start = Math.min(lineEnd, lineStart + Math.max(0, col - 1));
+    const end = lineEnd;
+
+    textarea.focus();
+    textarea.setSelectionRange(Math.min(start, end), Math.max(start, end));
+  }, [jumpTo, useFallbackEditor, content]);
 
   const handleEditorMount: OnMount = (editor, monaco) => {
     try {
@@ -380,6 +457,7 @@ export const ConfigRawEditor: React.FC<ConfigRawEditorProps> = ({
       )}>
         {useFallbackEditor ? (
           <textarea
+            ref={textareaRef}
             className={cn(
               "h-full w-full resize-none p-4 font-mono text-sm leading-6 outline-none",
               isDark ? "bg-[#1e1e1e] text-[#d4d4d4]" : "bg-white text-slate-900"

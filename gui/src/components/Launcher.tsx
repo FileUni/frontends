@@ -430,20 +430,14 @@ export default function Launcher() {
   const handleTestConfig = async () => {
     setConfigBusy(true);
     try {
-      const res = await safeInvoke<string[]>('test_config', { content: configContent });
-      if (res.length === 0) {
+      const errors = await safeInvoke<ConfigError[]>('test_config', { content: configContent });
+      if (errors.length === 0) {
         toast.success(t('launcher.messages.config_test_passed'));
         setConfigErrors([]);
         setConfigSummary('');
         setConfigSummaryLevel('info');
       } else {
         toast.error(t('launcher.messages.config_test_failed'));
-        // Try parsing errors
-        const errors: ConfigError[] = res.map(msg => ({
-          message: msg,
-          line: 0,
-          column: 0
-        }));
         setConfigErrors(errors);
         setConfigSummary(t('launcher.messages.config_test_failed'));
         setConfigSummaryLevel('error');

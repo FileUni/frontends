@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { AlertTriangle, WandSparkles } from 'lucide-react';
 import { ConfigEditorPanel } from './ConfigEditorPanel';
 import { ConfigQuickWizardModal, type ConfigQuickWizardModalProps } from './ConfigQuickWizardModal';
-import type { ConfigError, ConfigNoteEntry } from './ConfigRawEditor';
+import type { ConfigError, ConfigNoteEntry, EditorJumpPosition } from './ConfigRawEditor';
 import { useResolvedTheme } from '../lib/theme';
 import { cn } from '../lib/utils';
 
@@ -99,6 +99,7 @@ export const SystemConfigWorkbench: React.FC<SystemConfigWorkbenchProps> = ({
 }) => {
   const { t } = useTranslation();
   const [isQuickWizardOpen, setIsQuickWizardOpen] = useState(false);
+  const [jumpTo, setJumpTo] = useState<EditorJumpPosition | null>(null);
   const resolvedTheme = useResolvedTheme();
 
   const isDark = resolvedTheme === 'dark';
@@ -185,49 +186,62 @@ export const SystemConfigWorkbench: React.FC<SystemConfigWorkbenchProps> = ({
             )}
           </div>
           <div className="max-h-48 sm:max-h-64 overflow-y-auto custom-scrollbar pr-2 flex flex-col gap-2 sm:gap-2.5">
-            {validationErrors.map((err, index) => (
-              <div key={`${index}-${err.message}`} className={cn(
-                "flex items-start gap-2 sm:gap-3 group p-2.5 sm:p-3 rounded-lg sm:rounded-xl transition-all border",
-                isDark 
-                  ? "bg-black/20 hover:bg-black/40 border-white/5 hover:border-red-500/20" 
-                  : "bg-white hover:bg-red-50/30 border-slate-100 hover:border-red-200"
-              )}>
-                <div className="flex-1 min-w-0">
-                  <p className={cn(
-                    "text-sm sm:text-sm leading-relaxed font-mono font-bold transition-colors",
-                    isDark ? "text-red-200/90 group-hover:text-red-100" : "text-red-900"
-                  )}>
-                    {err.message}
-                  </p>
-                  <div className="mt-1.5 flex flex-wrap items-center gap-1.5 sm:gap-2">
-                    {typeof err.key === 'string' && err.key.trim().length > 0 && (
-                      <span className={cn(
-                        "text-sm sm:text-sm px-1.5 py-0.5 rounded border font-mono font-black",
-                        isDark ? "border-red-500/30 bg-red-500/10 text-red-200" : "border-red-200 bg-red-100 text-red-800"
-                      )}>
-                        key: {err.key}
-                      </span>
-                    )}
-                    {typeof err.line === 'number' && err.line > 0 && (
-                      <span className={cn(
-                        "text-sm sm:text-sm px-1.5 py-0.5 rounded border font-mono font-bold",
-                        isDark ? "border-white/10 bg-black/20 text-red-100/80" : "border-slate-200 bg-slate-100 text-slate-700"
-                      )}>
-                        line: {err.line}
-                      </span>
-                    )}
-                    {typeof err.column === 'number' && err.column > 0 && (
-                      <span className={cn(
-                        "text-sm sm:text-sm px-1.5 py-0.5 rounded border font-mono font-bold",
-                        isDark ? "border-white/10 bg-black/20 text-red-100/80" : "border-slate-200 bg-slate-100 text-slate-700"
-                      )}>
-                        column: {err.column}
-                      </span>
-                    )}
+            {validationErrors.map((err, index) => {
+              const canJump = typeof err.line === 'number' && err.line > 0;
+              return (
+                <button
+                  type="button"
+                  key={`${index}-${err.message}`}
+                  title={canJump ? `Jump to line ${err.line}` : undefined}
+                  onClick={() => {
+                    if (!canJump) return;
+                    setJumpTo({ line: err.line, column: err.column });
+                  }}
+                  className={cn(
+                    "flex items-start gap-2 sm:gap-3 group p-2.5 sm:p-3 rounded-lg sm:rounded-xl transition-all border text-left",
+                    isDark
+                      ? "bg-black/20 hover:bg-black/40 border-white/5 hover:border-red-500/20"
+                      : "bg-white hover:bg-red-50/30 border-slate-100 hover:border-red-200",
+                    canJump && "cursor-pointer"
+                  )}
+                >
+                  <div className="flex-1 min-w-0">
+                    <p className={cn(
+                      "text-sm sm:text-sm leading-relaxed font-mono font-bold transition-colors",
+                      isDark ? "text-red-200/90 group-hover:text-red-100" : "text-red-900"
+                    )}>
+                      {err.message}
+                    </p>
+                    <div className="mt-1.5 flex flex-wrap items-center gap-1.5 sm:gap-2">
+                      {typeof err.key === 'string' && err.key.trim().length > 0 && (
+                        <span className={cn(
+                          "text-sm sm:text-sm px-1.5 py-0.5 rounded border font-mono font-black",
+                          isDark ? "border-red-500/30 bg-red-500/10 text-red-200" : "border-red-200 bg-red-100 text-red-800"
+                        )}>
+                          key: {err.key}
+                        </span>
+                      )}
+                      {typeof err.line === 'number' && err.line > 0 && (
+                        <span className={cn(
+                          "text-sm sm:text-sm px-1.5 py-0.5 rounded border font-mono font-bold",
+                          isDark ? "border-white/10 bg-black/20 text-red-100/80" : "border-slate-200 bg-slate-100 text-slate-700"
+                        )}>
+                          line: {err.line}
+                        </span>
+                      )}
+                      {typeof err.column === 'number' && err.column > 0 && (
+                        <span className={cn(
+                          "text-sm sm:text-sm px-1.5 py-0.5 rounded border font-mono font-bold",
+                          isDark ? "border-white/10 bg-black/20 text-red-100/80" : "border-slate-200 bg-slate-100 text-slate-700"
+                        )}>
+                          column: {err.column}
+                        </span>
+                      )}
+                    </div>
                   </div>
-                </div>
-              </div>
-            ))}
+                </button>
+              );
+            })}
           </div>
         </div>
       )}
@@ -289,6 +303,7 @@ export const SystemConfigWorkbench: React.FC<SystemConfigWorkbenchProps> = ({
         content={content}
         notes={notes}
         errors={validationErrors}
+        jumpTo={jumpTo}
         loading={busy}
         saveDisabled={isSaveDisabled}
         onChange={onChange}
