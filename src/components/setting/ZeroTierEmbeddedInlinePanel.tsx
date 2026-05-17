@@ -91,7 +91,7 @@ type Props = {
 const defaultDraft: Draft = {
   enabled: false,
   adminApiEnabled: true,
-  networkId: "0cccb752f74b3637",
+  networkId: "0000000000000000",
   autoJoin: true,
   identityPublic: "",
   identitySecret: "",
