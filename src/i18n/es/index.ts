@@ -4,6 +4,7 @@ import { aboutByResourceLocale } from '../bundles/about';
 import { authByResourceLocale } from '../bundles/auth';
 import { blacklistByResourceLocale } from '../bundles/blacklist';
 import { cacheManagerByResourceLocale } from '../bundles/cacheManager';
+import { chatBuiltInByResourceLocale } from '../bundles/chatBuiltIn';
 import { commonByResourceLocale } from '../bundles/common';
 import { errorsByResourceLocale } from '../bundles/errors';
 import { forgotPasswordByResourceLocale } from '../bundles/forgotPassword';
@@ -32,6 +33,7 @@ const translation = {
   },
   "auth": authByResourceLocale.es,
   "blacklist": blacklistByResourceLocale.es,
+  "chatBuiltIn": chatBuiltInByResourceLocale.es,
   "cacheManager": cacheManagerByResourceLocale.es,
   "common": commonByResourceLocale.es,
   "errors": errorsByResourceLocale.es,

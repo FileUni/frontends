@@ -13,6 +13,7 @@ import { securityByResourceLocale } from '../bundles/security';
 import { sessionsByResourceLocale } from '../bundles/sessions';
 import { tosByResourceLocale } from '../bundles/tos';
 import { cacheManagerByResourceLocale } from '../bundles/cacheManager';
+import { chatBuiltInByResourceLocale } from '../bundles/chatBuiltIn';
 import { filemanagerByResourceLocale } from '../bundles/filemanager';
 import { pagesByResourceLocale } from '../bundles/pages';
 import { systemConfigByResourceLocale } from '../bundles/systemConfig';
@@ -32,6 +33,7 @@ const translation = {
   },
   "auth": authByResourceLocale['zh-CN'],
   "blacklist": blacklistByResourceLocale['zh-CN'],
+  "chatBuiltIn": chatBuiltInByResourceLocale['zh-CN'],
   "cacheManager": cacheManagerByResourceLocale['zh-CN'],
   "common": commonByResourceLocale['zh-CN'],
   "errors": errorsByResourceLocale['zh-CN'],

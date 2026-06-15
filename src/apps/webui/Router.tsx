@@ -8,6 +8,11 @@ import { renderNextcloudPublicPage } from "./nextcloud-routes";
 import { DashboardLayout } from "@/components/user-center/components/DashboardLayout";
 import { FileSidebar } from "@/components/file-manager/components/FileSidebar";
 import { PluginEmbeddedView } from '@/components/plugin/PluginEmbeddedView';
+const ChatBuiltInApp = lazy(() =>
+  import('@/components/chat-built-in/ChatBuiltInApp').then((m) => ({
+    default: m.ChatBuiltInApp,
+  }))
+);
 
 // Dynamic import public components
 const WelcomeView = lazy(() =>
@@ -189,6 +194,7 @@ export const AppRouter: React.FC = () => {
   // Auth check
   const isPublicPage =
     mod === "public" ||
+    mod === "chat-built-in" ||
     (mod === "file-manager" && page === "share");
   if (!isLoggedIn && !isPublicPage) {
     return (
@@ -435,6 +441,11 @@ const PageRenderer: React.FC<{
         <PluginEmbeddedView />
       </DashboardLayout>
     );
+  }
+
+  // Chat built-in (Matrix + Telegram, standalone, no auth required)
+  if (mod === 'chat-built-in') {
+    return <ChatBuiltInApp />;
   }
 
   // Default to home
